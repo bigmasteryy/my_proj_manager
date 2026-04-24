@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目管理平台原型</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient ambient-left"></div>
+  <div class="ambient ambient-right"></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <p class="eyebrow">Project Management</p>
+        <h1>项目管理平台</h1>
+        <p class="brand-copy">围绕 20 家券商，把项目、任务、风险和周报放到一张工作台上。</p>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="主导航">
+        <button type="button" class="nav-link active" data-view-target="dashboard">
+          <span class="nav-kicker">01</span>
+          <span>
+            <strong>首页驾驶舱</strong>
+            <small>今天先盯什么</small>
+          </span>
+        </button>
+        <button type="button" class="nav-link" data-view-target="brokers">
+          <span class="nav-kicker">02</span>
+          <span>
+            <strong>券商台账</strong>
+            <small>按券商看全局</small>
+          </span>
+        </button>
+        <button type="button" class="nav-link" data-view-target="project">
+          <span class="nav-kicker">03</span>
+          <span>
+            <strong>项目详情</strong>
+            <small>任务与风险主战场</small>
+          </span>
+        </button>
+        <button type="button" class="nav-link" data-view-target="risks">
+          <span class="nav-kicker">04</span>
+          <span>
+            <strong>风险中心</strong>
+            <small>临期与逾期处理台</small>
+          </span>
+        </button>
+        <button type="button" class="nav-link" data-view-target="templates">
+          <span class="nav-kicker">05</span>
+          <span>
+            <strong>模板中心</strong>
+            <small>新项目快速复制</small>
+          </span>
+        </button>
+        <button type="button" class="nav-link" data-view-target="reports">
+          <span class="nav-kicker">06</span>
+          <span>
+            <strong>周报导出</strong>
+            <small>一键整理汇报内容</small>
+          </span>
+        </button>
+      </nav>
+
+      <section class="sidebar-focus panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Today Focus</p>
+            <h2>今天优先处理</h2>
+          </div>
+        </div>
+        <ul class="compact-list">
+          <li>
+            <span class="tag danger">逾期</span>
+            <div>
+              <strong>A券商 / 条件单包</strong>
+              <small>已逾期 1 天，影响 4 月 20 日升级</small>
+            </div>
+          </li>
+          <li>
+            <span class="tag warn">高风险</span>
+            <div>
+              <strong>C券商 / 环境未就绪</strong>
+              <small>关键节点受影响，需要确认对方窗口</small>
+            </div>
+          </li>
+          <li>
+            <span class="tag info">临期</span>
+            <div>
+              <strong>B券商 / 接口验证</strong>
+              <small>距计划时间还有 2 天，当前仍在联调</small>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Personal PM Console</p>
+          <h2>项目总控台</h2>
+          <p class="topbar-copy">这是一版高保真静态原型，用于确认页面布局、操作路径和关键信息层次。</p>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn" data-view-target="templates">查看模板</button>
+          <button type="button" class="primary-btn" data-view-target="project">新增项目</button>
+        </div>
+      </header>
+
+      <main class="view-stack">
+        <section id="dashboard" class="view active" data-view="dashboard">
+          <section class="hero panel">
+            <div class="hero-copy">
+              <p class="eyebrow">Daily Control</p>
+              <h3>你今天需要先处理 3 个风险点，2 个关键升级节点本周到期。</h3>
+              <p>原型重点强调“今天先做什么”，而不是把所有台账都堆在首页。这样更贴合你每天先扫风险、再进项目的使用习惯。</p>
+              <div class="hero-actions">
+                <button type="button" class="primary-btn" data-view-target="risks">进入风险中心</button>
+                <button type="button" class="ghost-btn" data-view-target="project">查看 A券商项目</button>
+              </div>
+            </div>
+            <div class="hero-insight">
+              <div class="pulse-ring">
+                <span>75%</span>
+                <small>A券商升级完成度</small>
+              </div>
+              <div class="insight-grid">
+                <article>
+                  <strong>37</strong>
+                  <small>当前项目总数</small>
+                </article>
+                <article>
+                  <strong>12</strong>
+                  <small>本周关键节点</small>
+                </article>
+                <article>
+                  <strong>5</strong>
+                  <small>高风险事项</small>
+                </article>
+                <article>
+                  <strong>9</strong>
+                  <small>可模板化项目</small>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="stats-grid">
+            <article class="stat-card warm">
+              <p>总券商数</p>
+              <strong>20</strong>
+              <small>全部在管券商已建台账</small>
+            </article>
+            <article class="stat-card cool">
+              <p>进行中项目</p>
+              <strong>16</strong>
+              <small>其中 5 个为本周关键项目</small>
+            </article>
+            <article class="stat-card alert">
+              <p>临期任务</p>
+              <strong>8</strong>
+              <small>未来 3 天到期仍未完成</small>
+            </article>
+            <article class="stat-card danger">
+              <p>逾期任务</p>
+              <strong>3</strong>
+              <small>建议优先逐条处理</small>
+            </article>
+            <article class="stat-card muted">
+              <p>高风险事项</p>
+              <strong>5</strong>
+              <small>2 个影响关键节点</small>
+            </article>
+            <article class="stat-card bright">
+              <p>可复用模板</p>
+              <strong>3</strong>
+              <small>升级 / 改造 / 常规对接</small>
+            </article>
+          </section>
+
+          <section class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Upcoming</p>
+                  <h3>即将到期升级与上线</h3>
+                </div>
+                <button type="button" class="text-btn" data-view-target="project">查看项目详情</button>
+              </div>
+              <div class="timeline-list">
+                <article class="timeline-item">
+                  <span class="timeline-date">4/20</span>
+                  <div>
+                    <strong>A券商 · 版本升级</strong>
+                    <p>后台程序包已交付，接口包联调中，条件单包逾期未交。</p>
+                  </div>
+                  <span class="status-chip status-active">执行中</span>
+                </article>
+                <article class="timeline-item">
+                  <span class="timeline-date">4/18</span>
+                  <div>
+                    <strong>B券商 · 接口改造</strong>
+                    <p>联调进入第二轮，验证任务临期，风险等级中。</p>
+                  </div>
+                  <span class="status-chip status-prepare">准备中</span>
+                </article>
+                <article class="timeline-item">
+                  <span class="timeline-date">4/25</span>
+                  <div>
+                    <strong>D券商 · 条件单上线</strong>
+                    <p>对方待确认升级窗口，当前需提前锁定验证计划。</p>
+                  </div>
+                  <span class="status-chip status-watch">持续跟进</span>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Radar</p>
+                  <h3>风险预警 TOP 5</h3>
+                </div>
+                <button type="button" class="text-btn" data-view-target="risks">全部风险</button>
+              </div>
+              <ul class="priority-list">
+                <li>
+                  <div>
+                    <strong>A券商 / 条件单包延迟</strong>
+                    <small>交付延迟已影响升级准备</small>
+                  </div>
+                  <span class="tag danger">高</span>
+                </li>
+                <li>
+                  <div>
+                    <strong>C券商 / 环境未就绪</strong>
+                    <small>关键节点受影响，等待对方开放验证环境</small>
+                  </div>
+                  <span class="tag danger">高</span>
+                </li>
+                <li>
+                  <div>
+                    <strong>B券商 / 接口验证仍在联调</strong>
+                    <small>距计划时间剩余 2 天</small>
+                  </div>
+                  <span class="tag warn">中</span>
+                </li>
+                <li>
+                  <div>
+                    <strong>D券商 / 对方窗口未确认</strong>
+                    <small>影响上线排期</small>
+                  </div>
+                  <span class="tag warn">中</span>
+                </li>
+                <li>
+                  <div>
+                    <strong>E券商 / 条件单验证资源不足</strong>
+                    <small>测试安排需重新平衡</small>
+                  </div>
+                  <span class="tag info">低</span>
+                </li>
+              </ul>
+            </section>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Portfolio</p>
+                <h3>项目进度总览</h3>
+              </div>
+              <span class="panel-meta">建议这里支持筛选券商、状态、关键日期</span>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>券商</th>
+                    <th>项目</th>
+                    <th>类型</th>
+                    <th>负责人</th>
+                    <th>关键日期</th>
+                    <th>进度</th>
+                    <th>风险数</th>
+                    <th>逾期数</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>A券商</td>
+                    <td>4月20日版本升级</td>
+                    <td>版本升级</td>
+                    <td>张三</td>
+                    <td>2026-04-20</td>
+                    <td>
+                      <div class="progress-inline">
+                        <div class="progress-bar"><span style="width: 75%;"></span></div>
+                        <small>75%</small>
+                      </div>
+                    </td>
+                    <td>2</td>
+                    <td>1</td>
+                    <td><span class="status-chip status-active">执行中</span></td>
+                  </tr>
+                  <tr>
+                    <td>B券商</td>
+                    <td>接口改造</td>
+                    <td>改造</td>
+                    <td>李四</td>
+                    <td>2026-04-18</td>
+                    <td>
+                      <div class="progress-inline">
+                        <div class="progress-bar"><span style="width: 40%;"></span></div>
+                        <small>40%</small>
+                      </div>
+                    </td>
+                    <td>1</td>
+                    <td>0</td>
+                    <td><span class="status-chip status-prepare">准备中</span></td>
+                  </tr>
+                  <tr>
+                    <td>C券商</td>
+                    <td>新接入项目</td>
+                    <td>常规对接</td>
+                    <td>王五</td>
+                    <td>2026-04-24</td>
+                    <td>
+                      <div class="progress-inline">
+                        <div class="progress-bar"><span style="width: 55%;"></span></div>
+                        <small>55%</small>
+                      </div>
+                    </td>
+                    <td>2</td>
+                    <td>0</td>
+                    <td><span class="status-chip status-watch">持续跟进</span></td>
+                  </tr>
+                  <tr>
+                    <td>D券商</td>
+                    <td>条件单上线</td>
+                    <td>上线</td>
+                    <td>赵六</td>
+                    <td>2026-04-25</td>
+                    <td>
+                      <div class="progress-inline">
+                        <div class="progress-bar"><span style="width: 62%;"></span></div>
+                        <small>62%</small>
+                      </div>
+                    </td>
+                    <td>1</td>
+                    <td>0</td>
+                    <td><span class="status-chip status-active">执行中</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="brokers" class="view" data-view="brokers">
+          <section class="section-header">
+            <div>
+              <p class="eyebrow">Broker Ledger</p>
+              <h3>券商台账</h3>
+              <p>这里强调“每家券商最近发生了什么”，适合你从客户维度扫描项目健康度。</p>
+            </div>
+            <div class="filter-row">
+              <span class="filter-chip active">全部券商</span>
+              <span class="filter-chip">有逾期</span>
+              <span class="filter-chip">高风险</span>
+              <span class="filter-chip">本周升级</span>
+            </div>
+          </section>
+
+          <div class="broker-layout">
+            <div id="broker-cards" class="broker-cards"></div>
+
+            <section class="panel broker-detail">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Broker Snapshot</p>
+                  <h3 id="broker-detail-name">A券商</h3>
+                </div>
+                <button type="button" class="primary-btn" data-view-target="project">进入项目</button>
+              </div>
+              <div class="detail-meta">
+                <article>
+                  <small>当前项目</small>
+                  <strong id="broker-detail-project-count">3 个</strong>
+                </article>
+                <article>
+                  <small>进行中</small>
+                  <strong id="broker-detail-active-count">2 个</strong>
+                </article>
+                <article>
+                  <small>下一个关键节点</small>
+                  <strong id="broker-detail-next-node">4/20 版本升级</strong>
+                </article>
+                <article>
+                  <small>风险概况</small>
+                  <strong id="broker-detail-risk-count">2 个</strong>
+                </article>
+              </div>
+
+              <div class="mini-table" id="broker-detail-projects"></div>
+
+              <div class="broker-note">
+                <p class="eyebrow">建议视图</p>
+                <p id="broker-detail-note">该券商建议首页默认展示“关键节点 + 逾期任务 + 高风险事项”，避免进入详情前信息过少。</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="project" class="view" data-view="project">
+          <section class="section-header">
+            <div>
+              <p class="eyebrow">Project Detail</p>
+              <h3>A券商 / 2026-04-20 版本升级</h3>
+              <p>这是你最常待的页面，所以结构要稳定、信息要集中、更新路径要短。</p>
+            </div>
+            <div class="topbar-actions">
+              <button type="button" class="ghost-btn" data-view-target="templates">复制为模板</button>
+              <button type="button" class="primary-btn">新增任务</button>
+            </div>
+          </section>
+
+          <div class="project-overview">
+            <section class="panel overview-main">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Project Overview</p>
+                  <h3>项目概况</h3>
+                </div>
+                <span class="status-chip status-active">执行中</span>
+              </div>
+              <div class="overview-grid">
+                <article>
+                  <small>项目负责人</small>
+                  <strong>张三</strong>
+                </article>
+                <article>
+                  <small>关键日期</small>
+                  <strong>2026-04-20</strong>
+                </article>
+                <article>
+                  <small>整体进度</small>
+                  <strong>75%</strong>
+                </article>
+                <article>
+                  <small>当前逾期</small>
+                  <strong>1 项</strong>
+                </article>
+              </div>
+              <p class="overview-desc">项目涉及后台程序包、接口包、条件单包交付与验证，当前最大风险点为条件单包交付延迟。</p>
+              <div class="milestone-strip">
+                <div class="milestone done">
+                  <strong>4/15</strong>
+                  <small>后台程序包交付</small>
+                </div>
+                <div class="milestone active">
+                  <strong>4/17</strong>
+                  <small>接口联调完成</small>
+                </div>
+                <div class="milestone pending">
+                  <strong>4/20</strong>
+                  <small>正式升级</small>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel overview-side">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Quick Actions</p>
+                  <h3>快捷处理</h3>
+                </div>
+              </div>
+              <div class="quick-actions">
+                <button type="button" class="action-pill">新增风险</button>
+                <button type="button" class="action-pill">新增跟进记录</button>
+                <button type="button" class="action-pill">调整计划时间</button>
+                <button type="button" class="action-pill">生成项目周报</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="project-detail-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Tasks</p>
+                  <h3>任务清单</h3>
+                </div>
+                <span class="panel-meta">建议支持状态、负责人、逾期筛选</span>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>任务名称</th>
+                      <th>负责人</th>
+                      <th>计划内容</th>
+                      <th>计划时间</th>
+                      <th>实际执行</th>
+                      <th>完成情况</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>后台程序包</td>
+                      <td>张三</td>
+                      <td>提供程序包</td>
+                      <td>4/15</td>
+                      <td>已提交</td>
+                      <td>完成</td>
+                      <td><span class="status-chip status-done">已完成</span></td>
+                    </tr>
+                    <tr>
+                      <td>接口包</td>
+                      <td>李四</td>
+                      <td>提供接口包</td>
+                      <td>4/16</td>
+                      <td>联调中</td>
+                      <td>进行中</td>
+                      <td><span class="status-chip status-active">进行中</span></td>
+                    </tr>
+                    <tr>
+                      <td>条件单包</td>
+                      <td>王五</td>
+                      <td>提供条件单包</td>
+                      <td>4/14</td>
+                      <td>未提交</td>
+                      <td>未完成</td>
+                      <td><span class="status-chip status-overdue">已逾期</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Risks</p>
+                  <h3>风险清单</h3>
+                </div>
+                <button type="button" class="text-btn" data-view-target="risks">在风险中心处理</button>
+              </div>
+              <div class="risk-cards">
+                <article class="risk-card high">
+                  <div class="risk-card-head">
+                    <strong>接口验证延迟</strong>
+                    <span class="tag danger">高风险</span>
+                  </div>
+                  <p>影响关键节点：是</p>
+                  <p>责任人：李四</p>
+                  <p>应对措施：增加联调窗口，4/17 前完成验证。</p>
+                </article>
+                <article class="risk-card mid">
+                  <div class="risk-card-head">
+                    <strong>对方环境未就绪</strong>
+                    <span class="tag warn">中风险</span>
+                  </div>
+                  <p>影响关键节点：否</p>
+                  <p>责任人：张三</p>
+                  <p>应对措施：提前确认窗口，必要时拆分验证计划。</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel panel-full">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Follow-up Log</p>
+                  <h3>跟进记录</h3>
+                </div>
+                <button type="button" class="text-btn">新增记录</button>
+              </div>
+              <div class="log-timeline">
+                <article>
+                  <span>04/13 09:30</span>
+                  <div>
+                    <strong>接口包已开始第二轮联调</strong>
+                    <p>预计今晚确认联调结果，若失败需要明早补一次窗口。</p>
+                  </div>
+                </article>
+                <article>
+                  <span>04/13 10:20</span>
+                  <div>
+                    <strong>条件单包仍未收到</strong>
+                    <p>已提醒负责人，并标记为首页优先处理事项。</p>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="risks" class="view" data-view="risks">
+          <section class="section-header">
+            <div>
+              <p class="eyebrow">Risk Center</p>
+              <h3>风险与提醒中心</h3>
+              <p>这个页面更像你的“处理台”，不是只看一眼的报表页。</p>
+            </div>
+            <div class="filter-row" id="risk-filters">
+              <button type="button" class="filter-chip active" data-risk-filter="all">全部</button>
+              <button type="button" class="filter-chip" data-risk-filter="deadline">临期</button>
+              <button type="button" class="filter-chip" data-risk-filter="overdue">逾期</button>
+              <button type="button" class="filter-chip" data-risk-filter="high">高风险</button>
+              <button type="button" class="filter-chip" data-risk-filter="milestone">影响关键节点</button>
+            </div>
+          </section>
+
+          <div class="risk-center-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Action Queue</p>
+                  <h3>待处理事项</h3>
+                </div>
+              </div>
+              <div id="risk-list" class="alert-list">
+                <article class="alert-item" data-risk-type="overdue high milestone">
+                  <div class="alert-top">
+                    <span class="tag danger">逾期</span>
+                    <span class="tag danger">高风险</span>
+                  </div>
+                  <strong>A券商 / 4月20日升级 / 条件单包</strong>
+                  <p>截止时间 4/14，仍未提交，已影响升级准备。</p>
+                  <div class="alert-actions">
+                    <button type="button" class="primary-btn small-btn" data-view-target="project">去处理</button>
+                    <button type="button" class="ghost-btn small-btn">标记已跟进</button>
+                  </div>
+                </article>
+                <article class="alert-item" data-risk-type="deadline">
+                  <div class="alert-top">
+                    <span class="tag warn">临期</span>
+                  </div>
+                  <strong>B券商 / 接口改造 / 接口验证</strong>
+                  <p>距离计划时间还有 2 天，当前仍在联调中。</p>
+                  <div class="alert-actions">
+                    <button type="button" class="primary-btn small-btn">调整计划</button>
+                    <button type="button" class="ghost-btn small-btn">新增记录</button>
+                  </div>
+                </article>
+                <article class="alert-item" data-risk-type="high milestone">
+                  <div class="alert-top">
+                    <span class="tag danger">高风险</span>
+                    <span class="tag warm">关键节点</span>
+                  </div>
+                  <strong>C券商 / 新接入项目 / 环境未提供</strong>
+                  <p>影响首轮验证，需在本周内协调对方开放环境。</p>
+                  <div class="alert-actions">
+                    <button type="button" class="primary-btn small-btn">催办记录</button>
+                    <button type="button" class="ghost-btn small-btn">查看项目</button>
+                  </div>
+                </article>
+                <article class="alert-item" data-risk-type="deadline milestone">
+                  <div class="alert-top">
+                    <span class="tag warn">临期</span>
+                    <span class="tag warm">关键节点</span>
+                  </div>
+                  <strong>D券商 / 条件单上线 / 窗口未确认</strong>
+                  <p>上线窗口仍未锁定，可能影响排期承诺。</p>
+                  <div class="alert-actions">
+                    <button type="button" class="primary-btn small-btn">发起确认</button>
+                    <button type="button" class="ghost-btn small-btn">稍后处理</button>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Process Drawer</p>
+                  <h3>右侧处理抽屉示意</h3>
+                </div>
+              </div>
+              <div class="drawer-mock">
+                <div class="drawer-section">
+                  <small>当前事项</small>
+                  <strong>A券商 / 条件单包延迟</strong>
+                </div>
+                <div class="drawer-section">
+                  <small>处理动作</small>
+                  <div class="quick-actions vertical">
+                    <button type="button" class="action-pill">标记已处理</button>
+                    <button type="button" class="action-pill">调整计划时间</button>
+                    <button type="button" class="action-pill">新增跟进说明</button>
+                    <button type="button" class="action-pill">进入项目详情</button>
+                  </div>
+                </div>
+                <div class="drawer-section">
+                  <small>备注建议</small>
+                  <p>风险中心建议保留“快速处置”能力，不要只做跳转，否则每天盯风险时会多走很多路径。</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="templates" class="view" data-view="templates">
+          <section class="section-header">
+            <div>
+              <p class="eyebrow">Template Factory</p>
+              <h3>模板中心</h3>
+              <p>模板建议以“项目模板”为核心，而不是券商模板，这样复用边界更清楚。</p>
+            </div>
+            <div class="topbar-actions">
+              <button type="button" class="ghost-btn">从项目沉淀模板</button>
+              <button type="button" class="primary-btn">新建模板</button>
+            </div>
+          </section>
+
+          <div class="template-layout">
+            <div id="template-cards" class="template-cards"></div>
+            <section class="panel template-detail">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Template Detail</p>
+                  <h3 id="template-detail-name">版本升级模板</h3>
+                </div>
+                <button type="button" id="template-use-btn" class="primary-btn">基于模板新建项目</button>
+              </div>
+              <div class="template-badges" id="template-detail-badges"></div>
+              <div class="template-columns">
+                <div>
+                  <small>标准任务</small>
+                  <ul id="template-task-list" class="bullet-list"></ul>
+                </div>
+                <div>
+                  <small>默认风险检查项</small>
+                  <ul id="template-risk-list" class="bullet-list"></ul>
+                </div>
+              </div>
+              <div class="broker-note">
+                <p class="eyebrow">设计建议</p>
+                <p id="template-detail-note">适合做成“先选模板，再补日期和负责人”的快速创建流程，不建议让用户反复回填重复内容。</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="reports" class="view" data-view="reports">
+          <section class="section-header">
+            <div>
+              <p class="eyebrow">Weekly Export</p>
+              <h3>周报导出</h3>
+              <p>第一版建议先把内容结构做稳定，再考虑导出 Word、PDF 或外部发送。</p>
+            </div>
+            <div class="topbar-actions">
+              <button type="button" class="ghost-btn">保存草稿</button>
+              <button type="button" class="primary-btn" id="copy-report">复制周报文本</button>
+            </div>
+          </section>
+
+          <section class="report-layout">
+            <article class="panel report-summary">
+              <p class="eyebrow">This Week</p>
+              <h3>周报摘要</h3>
+              <p>本周共推进 16 个项目，其中 4 个关键节点项目进入执行阶段，3 个事项触发临期或逾期预警。</p>
+              <div class="summary-chips">
+                <span class="tag info">本周升级 4</span>
+                <span class="tag warn">逾期 3</span>
+                <span class="tag danger">高风险 5</span>
+              </div>
+            </article>
+
+            <div class="report-sections">
+              <section class="panel report-block">
+                <h4>本周完成事项</h4>
+                <ul class="bullet-list">
+                  <li>A券商后台程序包已交付。</li>
+                  <li>B券商接口联调完成第一轮。</li>
+                  <li>D券商上线前验证计划已确认。</li>
+                </ul>
+              </section>
+              <section class="panel report-block">
+                <h4>下周计划事项</h4>
+                <ul class="bullet-list">
+                  <li>推进 A券商条件单包交付并完成升级窗口确认。</li>
+                  <li>完成 C券商环境确认并安排首轮验证。</li>
+                  <li>补齐 E券商常规对接模板任务配置。</li>
+                </ul>
+              </section>
+              <section class="panel report-block">
+                <h4>逾期事项</h4>
+                <ul class="bullet-list">
+                  <li>A券商条件单包已逾期 1 天。</li>
+                  <li>F券商验证反馈待回收已超过计划时间。</li>
+                </ul>
+              </section>
+              <section class="panel report-block">
+                <h4>重点风险</h4>
+                <ul class="bullet-list">
+                  <li>C券商环境未就绪，影响关键节点。</li>
+                  <li>D券商上线窗口未确认，排期存在不确定性。</li>
+                </ul>
+              </section>
+              <section class="panel report-block">
+                <h4>需协调事项</h4>
+                <ul class="bullet-list">
+                  <li>协调对方尽快确认升级窗口。</li>
+                  <li>确认接口联调失败后的备用验证安排。</li>
+                </ul>
+              </section>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
