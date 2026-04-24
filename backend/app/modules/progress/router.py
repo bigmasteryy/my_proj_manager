@@ -37,11 +37,40 @@ STATUS_PROGRESS_MAP = {
 }
 
 
+def _normalize_status_value(status_value: Optional[str]) -> Optional[str]:
+    if status_value is None:
+        return None
+    normalized = status_value.strip()
+    if not normalized:
+        return None
+    return normalized if normalized in STATUS_PROGRESS_MAP else None
+
+
+def _format_progress_value(item_type: str, status_value: Optional[str], current_num: Optional[int], target_num: Optional[int], bool_value: Optional[bool], text_value: Optional[str], is_na: bool) -> str:
+    if is_na:
+        return "不适用"
+    if item_type == "status":
+        return _normalize_status_value(status_value) or "未开始"
+    if item_type == "number_progress":
+        if current_num is None and target_num is None:
+            return "-"
+        return f"{current_num or 0}/{target_num or 0}"
+    if item_type == "boolean":
+        if bool_value is None:
+            return "-"
+        return "是" if bool_value else "否"
+    return text_value or "-"
+
+
+def _build_auto_log_content(item_template: ProgressItemTemplate, before_text: str, after_text: str) -> str:
+    return f"{item_template.item_label} 更新：{before_text} -> {after_text}"
+
+
 def _calculate_item_percent(item_type: str, status_value: Optional[str], current_num: Optional[int], target_num: Optional[int], is_na: bool) -> int:
     if is_na:
         return 0
     if item_type == "status":
-        return STATUS_PROGRESS_MAP.get(status_value or "未开始", 0)
+        return STATUS_PROGRESS_MAP.get(_normalize_status_value(status_value) or "未开始", 0)
     if item_type == "number_progress":
         if not target_num or target_num <= 0:
             return 0
@@ -509,6 +538,7 @@ def update_progress_item_value(
         raise HTTPException(status_code=404, detail="Progress item template not found")
 
     value = next((item for item in instance.values if item.item_template_id == item_template_id), None)
+    previous_progress = instance.progress_percent
     if value is None:
         value = ProgressItemValue(
             broker_project_instance_id=instance_id,
@@ -519,17 +549,76 @@ def update_progress_item_value(
         db.flush()
         instance.values.append(value)
 
-    value.status_value = payload.status_value
+    before_snapshot = (
+        value.status_value,
+        value.current_num,
+        value.target_num,
+        value.bool_value,
+        value.text_value,
+        value.is_na,
+    )
+    before_text = _format_progress_value(
+        item_template.item_type,
+        value.status_value,
+        value.current_num,
+        value.target_num,
+        value.bool_value,
+        value.text_value,
+        value.is_na,
+    )
+
+    normalized_status_value = payload.status_value
+    if item_template.item_type == "status":
+        normalized_status_value = _normalize_status_value(payload.status_value)
+        if payload.status_value and normalized_status_value is None:
+            raise HTTPException(status_code=400, detail="Invalid progress status value")
+
+    value.status_value = normalized_status_value
     value.current_num = payload.current_num
     value.target_num = payload.target_num
     value.bool_value = payload.bool_value
     value.text_value = payload.text_value
     value.is_na = payload.is_na
     value.remark = payload.remark
-    value.calculated_percent = _calculate_item_percent(item_template.item_type, payload.status_value, payload.current_num, payload.target_num, payload.is_na)
+    value.calculated_percent = _calculate_item_percent(item_template.item_type, normalized_status_value, payload.current_num, payload.target_num, payload.is_na)
     value.updated_at = datetime.now()
 
     _refresh_instance(instance)
+    after_snapshot = (
+        value.status_value,
+        value.current_num,
+        value.target_num,
+        value.bool_value,
+        value.text_value,
+        value.is_na,
+    )
+    if before_snapshot != after_snapshot:
+        after_text = _format_progress_value(
+            item_template.item_type,
+            value.status_value,
+            value.current_num,
+            value.target_num,
+            value.bool_value,
+            value.text_value,
+            value.is_na,
+        )
+        auto_log = ProgressLog(
+            broker_project_instance_id=instance.id,
+            item_template_id=item_template.id,
+            log_date=datetime.now(),
+            content=_build_auto_log_content(item_template, before_text, after_text),
+            progress_delta=instance.progress_percent - previous_progress,
+            progress_after=instance.progress_percent,
+            is_milestone=False,
+            remark=value.remark,
+            created_by="系统自动记录",
+            created_at=datetime.now(),
+        )
+        db.add(auto_log)
+        db.flush()
+        instance.logs.append(auto_log)
+        _refresh_instance(instance)
+
     db.add(instance)
     db.commit()
     db.refresh(instance)

@@ -48,21 +48,25 @@
               <p>按项目模板定义的动态进度项逐项维护。</p>
             </div>
           </div>
-          <el-table :data="detail.progressItems" stripe>
-            <el-table-column prop="itemLabel" label="进度项" min-width="160" />
-            <el-table-column prop="type" label="类型" min-width="120" />
-            <el-table-column label="当前值" min-width="220">
+          <el-table :data="detail.progressItems" stripe max-height="480">
+            <el-table-column prop="itemLabel" label="进度项" min-width="150" sortable />
+            <el-table-column label="类型" min-width="100" sortable :sort-method="compareType">
+              <template #default="{ row }">
+                {{ formatItemType(row.type) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="当前值" min-width="180" sortable :sort-method="compareProgressValue">
               <template #default="{ row }">
                 <ProgressValueDisplay :value="row.value" :input-mode="detail.instance.inputMode" />
               </template>
             </el-table-column>
-            <el-table-column prop="weight" label="权重" min-width="80" />
+            <el-table-column prop="weight" label="权重" min-width="70" sortable />
             <el-table-column label="备注" min-width="220">
               <template #default="{ row }">
                 <div class="table-multiline">{{ row.value.remark || "-" }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="操作" min-width="120" fixed="right">
+            <el-table-column label="操作" min-width="100" fixed="right">
               <template #default="{ row }">
                 <el-button link type="primary" @click="openValueDialog(row)">更新进度</el-button>
               </template>
@@ -78,21 +82,21 @@
             </div>
             <el-button type="primary" @click="logDialogVisible = true">新增记录</el-button>
           </div>
-          <el-table v-if="detail.logs.length" :data="detail.logs" stripe>
-            <el-table-column prop="logDate" label="日期" min-width="120" />
-            <el-table-column prop="itemLabel" label="关联进度项" min-width="140" />
-            <el-table-column label="推进内容" min-width="260">
+          <el-table v-if="detail.logs.length" :data="detail.logs" stripe max-height="520">
+            <el-table-column prop="logDate" label="日期" min-width="110" sortable />
+            <el-table-column prop="itemLabel" label="关联进度项" min-width="120" sortable />
+            <el-table-column label="推进内容" min-width="240">
               <template #default="{ row }">
                 <div class="table-multiline">{{ row.content }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="变化" min-width="80">
+            <el-table-column prop="progressDelta" label="变化" min-width="70" sortable>
               <template #default="{ row }">+{{ row.progressDelta }}%</template>
             </el-table-column>
-            <el-table-column label="当前进度" min-width="100">
+            <el-table-column prop="progressAfter" label="当前进度" min-width="90" sortable>
               <template #default="{ row }">{{ row.progressAfter }}%</template>
             </el-table-column>
-            <el-table-column label="里程碑" min-width="100">
+            <el-table-column prop="isMilestone" label="里程碑" min-width="90" sortable>
               <template #default="{ row }">
                 <StatusTag :label="row.isMilestone ? '里程碑' : '普通记录'" />
               </template>
@@ -114,16 +118,16 @@
             </div>
             <el-button type="primary" @click="openRiskDialog()">新增风险</el-button>
           </div>
-          <el-table v-if="detail.risks.length" :data="detail.risks" stripe>
-            <el-table-column prop="title" label="风险标题" min-width="180" />
-            <el-table-column label="影响说明" min-width="240">
+          <el-table v-if="detail.risks.length" :data="detail.risks" stripe max-height="520">
+            <el-table-column prop="title" label="风险标题" min-width="160" sortable />
+            <el-table-column label="影响说明" min-width="220">
               <template #default="{ row }">
                 <div class="table-multiline">{{ row.impactDesc || row.description || "-" }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="ownerName" label="责任人" min-width="100" />
-            <el-table-column prop="plannedResolveDate" label="计划解决" min-width="120" />
-            <el-table-column label="状态" min-width="120">
+            <el-table-column prop="ownerName" label="责任人" min-width="90" sortable />
+            <el-table-column prop="plannedResolveDate" label="计划解决" min-width="110" sortable />
+            <el-table-column prop="status" label="状态" min-width="100" sortable>
               <template #default="{ row }">
                 <StatusTag :label="row.status" />
               </template>
@@ -328,6 +332,27 @@ const instanceId = Number(route.params.id);
 
 async function loadDetail() {
   detail.value = await getProgressInstanceDetail(instanceId);
+}
+
+function formatItemType(type: string) {
+  if (type === "status") return "状态型";
+  if (type === "number_progress") return "数量型";
+  if (type === "boolean") return "布尔型";
+  if (type === "milestone") return "里程碑型";
+  return type;
+}
+
+function compareType(a: { type: string }, b: { type: string }) {
+  return formatItemType(a.type).localeCompare(formatItemType(b.type));
+}
+
+function compareProgressValue(a: { value: { calculatedPercent: number; statusValue: string } }, b: { value: { calculatedPercent: number; statusValue: string } }) {
+  const valueA = a.value.calculatedPercent ?? 0;
+  const valueB = b.value.calculatedPercent ?? 0;
+  if (valueA !== valueB) {
+    return valueA - valueB;
+  }
+  return (a.value.statusValue || "").localeCompare(b.value.statusValue || "");
 }
 
 function handleBack() {

@@ -1,12 +1,11 @@
 <template>
   <div v-if="value.isNa" class="compact-note">不适用</div>
-  <div v-else-if="inputMode === '简化' && value.remark" class="compact-note">{{ value.remark }}</div>
   <div v-else-if="value.type === 'status'">
     <StatusTag :label="value.statusValue || '未开始'" />
   </div>
-  <div v-else-if="value.type === 'number_progress'" class="progress-value-stack">
+  <div v-else-if="value.type === 'number_progress'" class="progress-value-inline">
     <strong>{{ displayFraction }}</strong>
-    <div class="compact-note" v-if="showPercent">{{ value.calculatedPercent }}%</div>
+    <span v-if="showPercent" class="progress-value-percent">{{ value.calculatedPercent }}%</span>
   </div>
   <div v-else-if="value.type === 'boolean'">
     <StatusTag :label="value.boolValue ? '是' : '否'" />

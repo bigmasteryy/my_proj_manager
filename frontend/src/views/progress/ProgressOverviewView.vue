@@ -37,16 +37,16 @@
           <p>先按项目看全局推进，再进入矩阵查看每家券商的细节。</p>
         </div>
       </div>
-      <el-table v-if="projects.length" :data="projects" stripe>
-        <el-table-column prop="projectName" label="项目" min-width="180" />
-        <el-table-column prop="brokerCount" label="覆盖券商" min-width="100" />
-        <el-table-column prop="completedCount" label="已完成" min-width="100" />
-        <el-table-column prop="inProgressCount" label="推进中" min-width="100" />
-        <el-table-column prop="notStartedCount" label="未开始" min-width="100" />
-        <el-table-column prop="avgProgress" label="平均进度" min-width="100">
+      <el-table v-if="projects.length" :data="projects" stripe :fit="false">
+        <el-table-column prop="projectName" label="项目" min-width="180" sortable />
+        <el-table-column prop="brokerCount" label="覆盖券商" min-width="100" sortable />
+        <el-table-column prop="completedCount" label="已完成" min-width="100" sortable />
+        <el-table-column prop="inProgressCount" label="推进中" min-width="100" sortable />
+        <el-table-column prop="notStartedCount" label="未开始" min-width="100" sortable />
+        <el-table-column prop="avgProgress" label="平均进度" min-width="100" sortable>
           <template #default="{ row }">{{ row.avgProgress }}%</template>
         </el-table-column>
-        <el-table-column prop="riskCount" label="风险" min-width="80" />
+        <el-table-column prop="riskCount" label="风险" min-width="80" sortable />
         <el-table-column label="操作" min-width="140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="router.push(`/progress/matrix?projectId=${row.projectTemplateId}`)">查看矩阵</el-button>

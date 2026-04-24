@@ -20,20 +20,20 @@
           <p>看某家券商在多个重点项目上的推进情况。</p>
         </div>
       </div>
-      <el-table v-if="brokerView?.projects.length" :data="brokerView.projects" stripe>
-        <el-table-column prop="projectName" label="项目" min-width="180" />
-        <el-table-column prop="progressPercent" label="总进度" min-width="100">
+      <el-table v-if="brokerView?.projects.length" :data="brokerView.projects" stripe :fit="false">
+        <el-table-column prop="projectName" label="项目" min-width="160" sortable />
+        <el-table-column prop="progressPercent" label="总进度" min-width="90" sortable>
           <template #default="{ row }">{{ row.progressPercent }}%</template>
         </el-table-column>
-        <el-table-column label="当前状态" min-width="120">
+        <el-table-column prop="status" label="当前状态" min-width="100" sortable>
           <template #default="{ row }">
             <StatusTag :label="row.status" />
           </template>
         </el-table-column>
-        <el-table-column prop="latestUpdateAt" label="最近更新" min-width="120" />
-        <el-table-column prop="riskCount" label="风险" min-width="80" />
-        <el-table-column prop="milestoneCount" label="里程碑" min-width="80" />
-        <el-table-column label="操作" min-width="120" fixed="right">
+        <el-table-column prop="latestUpdateAt" label="最近更新" min-width="110" sortable />
+        <el-table-column prop="riskCount" label="风险" min-width="70" sortable />
+        <el-table-column prop="milestoneCount" label="里程碑" min-width="80" sortable />
+        <el-table-column label="操作" min-width="100" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="router.push(`/progress/instances/${row.instanceId}`)">查看详情</el-button>
           </template>

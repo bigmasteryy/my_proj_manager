@@ -46,14 +46,20 @@
         </div>
       </div>
 
-      <el-table v-if="matrix?.rows.length" :data="matrix.rows" stripe>
-        <el-table-column prop="brokerName" label="券商" min-width="120" fixed="left" />
-        <el-table-column prop="inputMode" label="录入模式" min-width="100" />
-        <el-table-column prop="overallConclusion" label="总体结论" min-width="120" />
-        <el-table-column prop="progressPercent" label="总进度" min-width="100">
+      <div v-if="matrix?.rows.length" class="table-scroll-shell">
+        <el-table
+          :data="matrix.rows"
+          stripe
+          style="width: 100%;"
+          max-height="560"
+          class="progress-table"
+        >
+        <el-table-column prop="brokerName" label="券商" min-width="110" fixed="left" sortable />
+        <el-table-column prop="overallConclusion" label="总体结论" min-width="100" sortable />
+        <el-table-column prop="progressPercent" label="总进度" min-width="90" sortable>
           <template #default="{ row }">{{ row.progressPercent }}%</template>
         </el-table-column>
-        <el-table-column label="当前状态" min-width="120">
+        <el-table-column prop="status" label="当前状态" min-width="100" sortable>
           <template #default="{ row }">
             <StatusTag :label="row.status" />
           </template>
@@ -68,7 +74,9 @@
               v-for="child in group.children"
               :key="child.key"
               :label="child.label"
-              min-width="140"
+              min-width="120"
+              sortable
+              :sort-method="(a, b) => compareDynamicValue(a, b, child.key)"
             >
               <template #default="{ row }">
                 <ProgressValueDisplay :value="row.values[child.key]" :input-mode="row.inputMode" />
@@ -78,22 +86,25 @@
           <el-table-column
             v-else
             :label="group.children[0].label"
-            min-width="140"
+            min-width="120"
+            sortable
+            :sort-method="(a, b) => compareDynamicValue(a, b, group.children[0].key)"
           >
             <template #default="{ row }">
               <ProgressValueDisplay :value="row.values[group.children[0].key]" :input-mode="row.inputMode" />
             </template>
           </el-table-column>
         </template>
-        <el-table-column prop="latestUpdateAt" label="最近更新" min-width="120" />
-        <el-table-column prop="milestoneCount" label="里程碑" min-width="90" />
-        <el-table-column prop="riskCount" label="风险" min-width="80" />
-        <el-table-column label="操作" min-width="140" fixed="right">
+        <el-table-column prop="latestUpdateAt" label="最近更新" min-width="110" sortable />
+        <el-table-column prop="milestoneCount" label="里程碑" min-width="80" sortable />
+        <el-table-column prop="riskCount" label="风险" min-width="70" sortable />
+        <el-table-column label="操作" min-width="110" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="router.push(`/progress/instances/${row.instanceId}`)">查看详情</el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
       <EmptyBlock
         v-else
         title="当前项目还没有券商推进数据"
@@ -135,6 +146,24 @@ const groupedColumns = computed(() => {
   return result;
 });
 
+function compareDynamicValue(a: ProgressMatrixResponse["rows"][number], b: ProgressMatrixResponse["rows"][number], key: string) {
+  const valueA = a.values[key];
+  const valueB = b.values[key];
+  if (!valueA && !valueB) return 0;
+  if (!valueA) return -1;
+  if (!valueB) return 1;
+
+  if (valueA.type === "status") {
+    return (valueA.statusValue || "").localeCompare(valueB.statusValue || "");
+  }
+
+  if (valueA.type === "number_progress") {
+    return (valueA.calculatedPercent || 0) - (valueB.calculatedPercent || 0);
+  }
+
+  return (valueA.remark || "").localeCompare(valueB.remark || "");
+}
+
 async function loadMatrix(projectId: number) {
   matrix.value = await getProgressMatrix(projectId);
 }
@@ -164,3 +193,23 @@ watch(
   }
 );
 </script>
+
+<style scoped>
+.table-scroll-shell {
+  width: 100%;
+  overflow-x: auto;
+}
+
+:deep(.progress-table th.el-table__cell > .cell) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  word-break: keep-all;
+  line-height: 1.2;
+}
+
+:deep(.progress-table .caret-wrapper) {
+  flex: 0 0 auto;
+}
+</style>

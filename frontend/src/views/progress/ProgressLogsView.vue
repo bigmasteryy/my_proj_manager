@@ -32,23 +32,23 @@
         </div>
         <el-button type="primary" @click="loadLogs">刷新</el-button>
       </div>
-      <el-table v-if="logs.length" :data="logs" stripe>
-        <el-table-column prop="logDate" label="日期" min-width="120" />
-        <el-table-column prop="projectName" label="项目" min-width="160" />
-        <el-table-column prop="brokerName" label="券商" min-width="120" />
-        <el-table-column prop="itemLabel" label="进度项" min-width="120" />
-        <el-table-column label="推进内容" min-width="280">
+      <el-table v-if="logs.length" :data="logs" stripe max-height="560">
+        <el-table-column prop="logDate" label="日期" min-width="110" sortable />
+        <el-table-column prop="projectName" label="项目" min-width="140" sortable />
+        <el-table-column prop="brokerName" label="券商" min-width="110" sortable />
+        <el-table-column prop="itemLabel" label="进度项" min-width="110" sortable />
+        <el-table-column label="推进内容" min-width="240">
           <template #default="{ row }">
             <div class="table-multiline">{{ row.content }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="进度变化" min-width="100">
+        <el-table-column prop="progressDelta" label="进度变化" min-width="90" sortable>
           <template #default="{ row }">+{{ row.progressDelta }}%</template>
         </el-table-column>
-        <el-table-column label="当前进度" min-width="100">
+        <el-table-column prop="progressAfter" label="当前进度" min-width="90" sortable>
           <template #default="{ row }">{{ row.progressAfter }}%</template>
         </el-table-column>
-        <el-table-column label="里程碑" min-width="100">
+        <el-table-column prop="isMilestone" label="里程碑" min-width="90" sortable>
           <template #default="{ row }">
             <StatusTag :label="row.isMilestone ? '里程碑' : '普通记录'" />
           </template>

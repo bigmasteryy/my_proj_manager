@@ -33,18 +33,18 @@
         </div>
         <el-button type="primary" @click="loadRisks">刷新</el-button>
       </div>
-      <el-table v-if="risks.length" :data="risks" stripe>
-        <el-table-column prop="projectName" label="项目" min-width="160" />
-        <el-table-column prop="brokerName" label="券商" min-width="120" />
-        <el-table-column prop="title" label="风险标题" min-width="200" />
+      <el-table v-if="risks.length" :data="risks" stripe max-height="560">
+        <el-table-column prop="projectName" label="项目" min-width="140" sortable />
+        <el-table-column prop="brokerName" label="券商" min-width="110" sortable />
+        <el-table-column prop="title" label="风险标题" min-width="180" sortable />
         <el-table-column label="影响说明" min-width="220">
           <template #default="{ row }">
             <div class="table-multiline">{{ row.impactDesc || row.description || "-" }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="ownerName" label="责任人" min-width="100" />
-        <el-table-column prop="plannedResolveDate" label="计划解决" min-width="120" />
-        <el-table-column label="状态" min-width="120">
+        <el-table-column prop="ownerName" label="责任人" min-width="90" sortable />
+        <el-table-column prop="plannedResolveDate" label="计划解决" min-width="110" sortable />
+        <el-table-column prop="status" label="状态" min-width="100" sortable>
           <template #default="{ row }">
             <StatusTag :label="row.status" />
           </template>
