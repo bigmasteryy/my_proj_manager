@@ -15,6 +15,9 @@ from app.db.models import (
     ProgressLog,
     ProgressProjectTemplate,
     ProgressRisk,
+    ProgressStage2GroupTemplate,
+    ProgressStage2StepInstance,
+    ProgressStage2StepTemplate,
     Reminder,
     Risk,
     Task,
@@ -78,8 +81,41 @@ STATUS_PROGRESS_MAP = {
 def ensure_progress_seed(session: Session) -> None:
     broker_map = ensure_progress_brokers(session)
     template_map, item_map = ensure_progress_templates(session)
+    ensure_stage2_templates(session, template_map)
     ensure_progress_instances(session, broker_map, template_map, item_map)
+    ensure_stage2_instances(session, template_map)
+    normalize_local_route_ready_status(session)
     session.commit()
+
+
+def normalize_local_route_ready_status(session: Session) -> None:
+    local_route_template = (
+        session.query(ProgressProjectTemplate)
+        .filter(ProgressProjectTemplate.code == "local_route_upgrade")
+        .first()
+    )
+    if local_route_template is None:
+        return
+
+    local_route_instance_ids = [
+        row.id
+        for row in session.query(ProgressBrokerProjectInstance.id)
+        .filter(ProgressBrokerProjectInstance.project_template_id == local_route_template.id)
+        .all()
+    ]
+    if not local_route_instance_ids:
+        return
+
+    values = (
+        session.query(ProgressItemValue)
+        .filter(ProgressItemValue.broker_project_instance_id.in_(local_route_instance_ids))
+        .filter(ProgressItemValue.status_value == "就绪")
+        .all()
+    )
+    for value in values:
+        value.status_value = "已支持"
+        value.calculated_percent = 100
+        value.updated_at = datetime.now()
 
 
 def ensure_progress_brokers(session: Session) -> dict:
@@ -189,6 +225,145 @@ def ensure_progress_templates(session: Session) -> tuple:
         item_map[(item.project_template.code, item.item_key)] = item
 
     return template_map, item_map
+
+
+def ensure_stage2_templates(session: Session, template_map: dict) -> None:
+    local_template = template_map.get("local_route_upgrade")
+    if local_template is None:
+        return
+
+    group_specs = [
+        {"group_code": "precheck", "group_name": "前置确认", "sort_no": 1},
+        {"group_code": "backend_config", "group_name": "后台配置", "sort_no": 2},
+        {"group_code": "pc_related", "group_name": "PC相关", "sort_no": 3},
+        {"group_code": "gray_release", "group_name": "灰度与放开", "sort_no": 4},
+        {"group_code": "optional_finish", "group_name": "收尾与可选动作", "sort_no": 5},
+    ]
+
+    existing_groups = {group.group_code: group for group in local_template.stage2_groups}
+    for group_spec in group_specs:
+        if group_spec["group_code"] in existing_groups:
+            continue
+        session.add(
+            ProgressStage2GroupTemplate(
+                project_template_id=local_template.id,
+                group_code=group_spec["group_code"],
+                group_name=group_spec["group_name"],
+                sort_no=group_spec["sort_no"],
+            )
+        )
+    session.flush()
+    session.expire(local_template, ["stage2_groups"])
+
+    group_map = {group.group_code: group for group in session.query(ProgressStage2GroupTemplate).filter(ProgressStage2GroupTemplate.project_template_id == local_template.id).all()}
+    step_specs = [
+        {"group_code": "precheck", "step_code": "5", "step_no_display": "5", "step_name": "主站对外地址通知并确认权重设置", "owners_default": "易勇、券商负责人、券商工程、陈良海", "sort_no": 1},
+        {"group_code": "precheck", "step_code": "6", "step_no_display": "6", "step_name": "线上营业部配置对应关系检查（k客户号）", "owners_default": "陈良海", "dependency_step_codes": "5", "sort_no": 2},
+        {"group_code": "backend_config", "step_code": "7", "step_no_display": "7", "step_name": "小财神后台-券商信息配置-新增券商", "owners_default": "蒋张飞/陈良海", "dependency_step_codes": "6", "sort_no": 1},
+        {"group_code": "backend_config", "step_code": "8", "step_no_display": "8", "step_name": "订单系统本地路由相关开关开启", "owners_default": "戴洪添", "dependency_step_codes": "7", "remark_template": "具体打开方式详见生产主站路由券商切换本地路由实施方案", "sort_no": 2},
+        {"group_code": "backend_config", "step_code": "9", "step_no_display": "9", "step_name": "将签约名单同步给小财神", "owners_default": "戴洪添", "dependency_step_codes": "8", "sort_no": 3},
+        {"group_code": "backend_config", "step_code": "10", "step_no_display": "10", "step_name": "小财神后台-业务标签-增加默认配置", "owners_default": "蒋张飞/陈良海", "dependency_step_codes": "9", "sort_no": 4},
+        {"group_code": "backend_config", "step_code": "14", "step_no_display": "14", "step_name": "营业部配置增加条件单、快速柜台标记", "owners_default": "陈良海", "dependency_step_codes": "10", "sort_no": 5},
+        {"group_code": "pc_related", "step_code": "11", "step_no_display": "11", "step_name": "PC端券商DLL本地路由开关升级", "owners_default": "林坚恒、薛伟", "applicable_rule": "已支持PC的券商执行", "dependency_step_codes": "10", "is_optional": True, "sort_no": 1},
+        {"group_code": "pc_related", "step_code": "12", "step_no_display": "12", "step_name": "PC端券商快速柜台/云条件单站点属性升级", "owners_default": "薛伟", "applicable_rule": "已支持PC的券商执行", "dependency_step_codes": "11", "is_optional": True, "sort_no": 2},
+        {"group_code": "gray_release", "step_code": "15", "step_no_display": "15", "step_name": "本地路由灰度配置放开", "owners_default": "徐慧信", "dependency_step_codes": "14", "is_last_step": True, "remark_template": "最后执行", "sort_no": 1},
+        {"group_code": "gray_release", "step_code": "18", "step_no_display": "18", "step_name": "本地路由灰度完成，全部放开", "owners_default": "申宝杰", "dependency_step_codes": "15", "sort_no": 2},
+        {"group_code": "gray_release", "step_code": "19", "step_no_display": "19", "step_name": "监控终端 qbmonitor 配置调整为本地路由模式", "owners_default": "戴洪添", "dependency_step_codes": "18", "remark_template": "monitorinfo.xml", "sort_no": 3},
+        {"group_code": "gray_release", "step_code": "19A", "step_no_display": "19A", "step_name": "认证程序支持主从", "owners_default": "", "dependency_step_codes": "18", "remark_template": "sysconf，key_name=unsign_effective_time，值 1 改为 0", "sort_no": 4},
+        {"group_code": "gray_release", "step_code": "19B", "step_no_display": "19B", "step_name": "用户解约&转发生效时间开关改为实时生效", "owners_default": "", "dependency_step_codes": "18", "sort_no": 5},
+        {"group_code": "gray_release", "step_code": "20", "step_no_display": "20", "step_name": "全部放开后检查 auth 是否还有主站路由请求", "owners_default": "戴洪添", "dependency_step_codes": "18", "sort_no": 6},
+        {"group_code": "gray_release", "step_code": "20A", "step_no_display": "20A", "step_name": "本地路由放开后运行情况分析", "owners_default": "", "dependency_step_codes": "18", "sort_no": 7},
+        {"group_code": "optional_finish", "step_code": "21", "step_no_display": "21", "step_name": "委托主站去除主站路由支持配置", "owners_default": "易勇、戴洪添、券商负责人、券商工程", "dependency_step_codes": "20", "is_optional": True, "remark_template": "根据券商情况确认是否做", "sort_no": 1},
+        {"group_code": "optional_finish", "step_code": "22", "step_no_display": "22", "step_name": "委托主站程序、routeid.cfg配置&接口程序部署", "owners_default": "易勇、戴洪添、券商负责人、券商工程", "dependency_step_codes": "21", "is_optional": True, "remark_template": "主站路由下线后做", "sort_no": 2},
+        {"group_code": "optional_finish", "step_code": "23", "step_no_display": "23", "step_name": "委托主站站点增加条件单、快速柜台标记、权重调整", "owners_default": "陈良海", "dependency_step_codes": "22", "is_optional": True, "sort_no": 3},
+    ]
+
+    existing_steps = {step.step_code: step for step in local_template.stage2_steps}
+    for step_spec in step_specs:
+        if step_spec["step_code"] in existing_steps:
+            continue
+        session.add(
+            ProgressStage2StepTemplate(
+                project_template_id=local_template.id,
+                group_template_id=group_map[step_spec["group_code"]].id,
+                step_code=step_spec["step_code"],
+                step_no_display=step_spec["step_no_display"],
+                step_name=step_spec["step_name"],
+                owners_default=step_spec.get("owners_default"),
+                is_optional=step_spec.get("is_optional", False),
+                is_last_step=step_spec.get("is_last_step", False),
+                applicable_rule=step_spec.get("applicable_rule"),
+                dependency_step_codes=step_spec.get("dependency_step_codes"),
+                remark_template=step_spec.get("remark_template"),
+                sort_no=step_spec["sort_no"],
+            )
+        )
+    session.flush()
+
+
+def ensure_stage2_instances(session: Session, template_map: dict) -> None:
+    local_template = template_map.get("local_route_upgrade")
+    if local_template is None:
+        return
+
+    step_templates = (
+        session.query(ProgressStage2StepTemplate)
+        .options()
+        .filter(ProgressStage2StepTemplate.project_template_id == local_template.id)
+        .order_by(ProgressStage2StepTemplate.sort_no.asc(), ProgressStage2StepTemplate.id.asc())
+        .all()
+    )
+    template_map_by_code = {item.step_code: item for item in step_templates}
+
+    existing_instances = (
+        session.query(ProgressBrokerProjectInstance)
+        .filter(ProgressBrokerProjectInstance.project_template_id == local_template.id)
+        .all()
+    )
+
+    seeded_status_map = {
+        "太平洋": {
+            "5": "已完成",
+            "6": "已完成",
+            "7": "已完成",
+            "8": "已完成",
+            "9": "已完成",
+            "10": "已完成",
+            "14": "已完成",
+            "15": "已完成",
+            "18": "进行中",
+        },
+        "东吴": {
+            "5": "已完成",
+            "6": "已完成",
+            "7": "已完成",
+            "8": "进行中",
+        },
+    }
+
+    for instance in existing_instances:
+        existing_step_instances = {item.step_template.step_code: item for item in instance.stage2_step_instances}
+        seeded_steps = seeded_status_map.get(instance.broker.name, {})
+        for step_template in step_templates:
+            if step_template.step_code in existing_step_instances:
+                continue
+            status = seeded_steps.get(step_template.step_code, "未开始")
+            started_at = datetime(2026, 4, 24, 9, 0) if status in {"进行中", "已完成"} else None
+            finished_at = datetime(2026, 4, 24, 18, 0) if status == "已完成" else None
+            session.add(
+                ProgressStage2StepInstance(
+                    broker_project_instance_id=instance.id,
+                    step_template_id=step_template.id,
+                    owner_actual=step_template.owners_default,
+                    status=status,
+                    remark=step_template.remark_template if status != "未开始" and step_template.remark_template else None,
+                    blocker_reason=None,
+                    started_at=started_at,
+                    finished_at=finished_at,
+                    updated_at=datetime.now(),
+                )
+            )
+    session.flush()
 
 
 def ensure_progress_instances(session: Session, broker_map: dict, template_map: dict, item_map: dict) -> None:

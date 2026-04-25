@@ -12,19 +12,19 @@ const props = defineProps<{
 }>();
 
 const variantClass = computed(() => {
-  if (["执行中", "进行中", "高风险", "启用"].includes(props.label)) {
+  if (["执行中", "进行中", "高风险", "启用", "已支持"].includes(props.label)) {
     return "active";
   }
 
-  if (["准备中", "临期", "中风险"].includes(props.label)) {
+  if (["准备中", "临期", "中风险", "可开始", "就绪"].includes(props.label)) {
     return "warning";
   }
 
-  if (["已逾期", "逾期", "待处理", "停用"].includes(props.label)) {
+  if (["已逾期", "逾期", "待处理", "停用", "不支持", "阻塞"].includes(props.label)) {
     return "danger";
   }
 
-  if (["已完成", "已解除"].includes(props.label)) {
+  if (["已完成", "已解除", "支持", "里程碑"].includes(props.label)) {
     return "success";
   }
 

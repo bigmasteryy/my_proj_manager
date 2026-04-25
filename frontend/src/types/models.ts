@@ -326,6 +326,35 @@ export interface ProgressProjectSummary {
   riskCount: number;
 }
 
+export interface ProgressProjectCreatePayload {
+  code?: string;
+  name: string;
+  project_type: string;
+  description?: string;
+  status: string;
+  sort_no?: number | null;
+}
+
+export interface ProgressProjectBrokerAddPayload {
+  broker_ids: number[];
+  input_mode: string;
+  owner_name?: string;
+  remark?: string;
+}
+
+export interface ProgressItemTemplateCreatePayload {
+  item_key?: string;
+  item_label: string;
+  group_key?: string;
+  group_label?: string;
+  item_type: string;
+  weight: number;
+  allow_na: boolean;
+  sort_no?: number | null;
+  value_rule?: string;
+  remark?: string;
+}
+
 export interface ProgressDynamicColumn {
   id: number;
   key: string;
@@ -359,6 +388,17 @@ export interface ProgressMatrixRow {
   latestUpdateAt: string;
   milestoneCount: number;
   riskCount: number;
+  stage2?: {
+    status: string;
+    completedCount: number;
+    totalCount: number;
+    progressPercent: number;
+    blockedCount: number;
+    currentStepCode: string;
+    currentStepNo: string;
+    currentStepName: string;
+    currentStepOwner: string;
+  } | null;
   values: Record<string, ProgressCellValue>;
 }
 
@@ -444,6 +484,34 @@ export interface ProgressRiskItem {
   remark: string;
 }
 
+export interface ProgressStage2StepItem {
+  stepInstanceId: number;
+  stepCode: string;
+  stepNoDisplay: string;
+  stepName: string;
+  ownersDefault: string;
+  ownerActual: string;
+  status: string;
+  effectiveStatus: string;
+  isOptional: boolean;
+  isLastStep: boolean;
+  applicableRule: string;
+  dependencyStepCodes: string[];
+  remarkTemplate: string;
+  remark: string;
+  blockerReason: string;
+  startedAt: string;
+  finishedAt: string;
+}
+
+export interface ProgressStage2Group {
+  groupCode: string;
+  groupName: string;
+  completedCount: number;
+  totalCount: number;
+  steps: ProgressStage2StepItem[];
+}
+
 export interface ProgressInstanceDetail {
   instance: {
     id: number;
@@ -460,6 +528,18 @@ export interface ProgressInstanceDetail {
     milestoneCount: number;
     remark: string;
   };
+  stage2?: {
+    status: string;
+    completedCount: number;
+    totalCount: number;
+    progressPercent: number;
+    blockedCount: number;
+    currentStepCode: string;
+    currentStepNo: string;
+    currentStepName: string;
+    currentStepOwner: string;
+  } | null;
+  stage2Groups: ProgressStage2Group[];
   progressItems: ProgressItemDetail[];
   logs: ProgressLogItem[];
   risks: ProgressRiskItem[];
@@ -497,3 +577,28 @@ export interface ProgressRiskCreatePayload {
 }
 
 export interface ProgressRiskUpdatePayload extends ProgressRiskCreatePayload {}
+
+export interface ProgressStage2StepUpdatePayload {
+  step_no_display?: string;
+  step_name?: string;
+  owner_actual?: string | null;
+  status: string;
+  remark?: string | null;
+  blocker_reason?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
+export interface ProgressStage2StepCreatePayload {
+  step_no_display: string;
+  step_name: string;
+  owner_actual?: string | null;
+  status: string;
+  remark?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
+export interface ProgressStage2StepMovePayload {
+  direction: string;
+}

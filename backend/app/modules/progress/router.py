@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.models import (
     Broker,
@@ -14,13 +15,23 @@ from app.db.models import (
     ProgressLog,
     ProgressProjectTemplate,
     ProgressRisk,
+    ProgressStage2GroupTemplate,
+    ProgressStage2StepInstance,
+    ProgressStage2StepTemplate,
 )
 from app.db.session import get_db
 from app.modules.common import ok
 from app.modules.progress.schemas import (
     ProgressLogCreatePayload,
+    ProgressLogUpdatePayload,
+    ProgressItemTemplateCreatePayload,
+    ProgressProjectBrokerAddPayload,
+    ProgressProjectCreatePayload,
     ProgressRiskCreatePayload,
     ProgressRiskUpdatePayload,
+    ProgressStage2StepCreatePayload,
+    ProgressStage2StepMovePayload,
+    ProgressStage2StepUpdatePayload,
     ProgressValueUpdatePayload,
 )
 
@@ -66,6 +77,314 @@ def _build_auto_log_content(item_template: ProgressItemTemplate, before_text: st
     return f"{item_template.item_label} 更新：{before_text} -> {after_text}"
 
 
+def _build_stage2_auto_log_content(step_template: ProgressStage2StepTemplate, before_status: str, after_status: str) -> str:
+    return f"阶段2 步骤 {step_template.step_no_display} {step_template.step_name} 状态更新：{before_status} -> {after_status}"
+
+
+def _normalize_key(raw_value: Optional[str], fallback_prefix: str) -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9_]+", "_", (raw_value or "").strip().lower()).strip("_")
+    if normalized:
+        return normalized
+    return f"{fallback_prefix}_{int(datetime.now().timestamp())}"
+
+
+def _build_unique_project_code(db: Session, raw_code: Optional[str], name: str) -> str:
+    base_code = _normalize_key(raw_code or name, "progress_project")
+    candidate = base_code
+    suffix = 2
+    while db.query(ProgressProjectTemplate).filter(ProgressProjectTemplate.code == candidate).first():
+        candidate = f"{base_code}_{suffix}"
+        suffix += 1
+    return candidate
+
+
+def _build_unique_item_key(project_template_id: int, raw_key: Optional[str], item_label: str, db: Session) -> str:
+    base_key = _normalize_key(raw_key or item_label, "progress_item")
+    candidate = base_key
+    suffix = 2
+    while (
+        db.query(ProgressItemTemplate)
+        .filter(
+            ProgressItemTemplate.project_template_id == project_template_id,
+            ProgressItemTemplate.item_key == candidate,
+        )
+        .first()
+    ):
+        candidate = f"{base_key}_{suffix}"
+        suffix += 1
+    return candidate
+
+
+def _create_default_value(instance_id: int, item_template: ProgressItemTemplate) -> ProgressItemValue:
+    return ProgressItemValue(
+        broker_project_instance_id=instance_id,
+        item_template_id=item_template.id,
+        status_value="未开始" if item_template.item_type == "status" else None,
+        current_num=None,
+        target_num=None,
+        bool_value=None,
+        text_value=None,
+        is_na=False,
+        calculated_percent=0,
+        remark=None,
+        updated_at=datetime.now(),
+    )
+
+
+def _create_stage2_step_instances(instance: ProgressBrokerProjectInstance, db: Session) -> None:
+    step_templates = (
+        db.query(ProgressStage2StepTemplate)
+        .filter(ProgressStage2StepTemplate.project_template_id == instance.project_template_id)
+        .order_by(ProgressStage2StepTemplate.sort_no.asc(), ProgressStage2StepTemplate.id.asc())
+        .all()
+    )
+    if not step_templates:
+        return
+
+    existing_template_ids = {item.step_template_id for item in instance.stage2_step_instances}
+    new_steps = []
+    for step_template in step_templates:
+        if step_template.id in existing_template_ids:
+            continue
+        new_steps.append(
+            ProgressStage2StepInstance(
+                broker_project_instance_id=instance.id,
+                step_template_id=step_template.id,
+                owner_actual=None,
+                status="未开始",
+                remark=None,
+                blocker_reason=None,
+                started_at=None,
+                finished_at=None,
+                updated_at=datetime.now(),
+            )
+        )
+    if new_steps:
+        db.add_all(new_steps)
+
+
+def _ensure_stage2_default_group(project_template_id: int, db: Session) -> ProgressStage2GroupTemplate:
+    group = (
+        db.query(ProgressStage2GroupTemplate)
+        .filter(ProgressStage2GroupTemplate.project_template_id == project_template_id)
+        .order_by(ProgressStage2GroupTemplate.sort_no.asc(), ProgressStage2GroupTemplate.id.asc())
+        .first()
+    )
+    if group is not None:
+        return group
+    group = ProgressStage2GroupTemplate(
+        project_template_id=project_template_id,
+        group_code="all_steps",
+        group_name="步骤清单",
+        sort_no=1,
+        remark=None,
+    )
+    db.add(group)
+    db.flush()
+    return group
+
+
+def _split_dependency_codes(raw_codes: Optional[str]) -> list[str]:
+    if not raw_codes:
+        return []
+    return [item.strip() for item in raw_codes.split(",") if item.strip()]
+
+
+def _stage2_effective_status(step_instance: ProgressStage2StepInstance, completed_step_codes: set[str]) -> str:
+    if step_instance.status in {"已完成", "进行中", "阻塞", "不适用", "已跳过"}:
+        return step_instance.status
+    dependency_codes = _split_dependency_codes(step_instance.step_template.dependency_step_codes)
+    if dependency_codes and not all(code in completed_step_codes for code in dependency_codes):
+        return "未开始"
+    return "可开始" if step_instance.status == "未开始" else step_instance.status
+
+
+def _build_stage2_summary(instance: ProgressBrokerProjectInstance) -> dict:
+    steps = sorted(
+        instance.stage2_step_instances,
+        key=lambda item: (item.step_template.group_template.sort_no, item.step_template.sort_no, item.step_template.id),
+    )
+    required_steps = [item for item in steps if not item.step_template.is_optional and item.status not in {"不适用", "已跳过"}]
+    completed_step_codes = {item.step_template.step_code for item in steps if item.status == "已完成"}
+    blocked_steps = [item for item in steps if item.status == "阻塞"]
+    current_step = None
+    if blocked_steps:
+        current_step = blocked_steps[0]
+    else:
+        for item in steps:
+            effective_status = _stage2_effective_status(item, completed_step_codes)
+            if effective_status not in {"已完成", "不适用", "已跳过"}:
+                current_step = item
+                break
+
+    completed_required_count = len([item for item in required_steps if item.status == "已完成"])
+    total_required_count = len(required_steps)
+    progress_percent = round((completed_required_count / total_required_count) * 100) if total_required_count else 0
+
+    if blocked_steps:
+        stage_status = "阻塞"
+    elif current_step is None and total_required_count > 0:
+        stage_status = "已完成"
+    elif completed_required_count > 0:
+        stage_status = "推进中"
+    else:
+        stage_status = "未开始"
+
+    return {
+        "status": stage_status,
+        "completedCount": completed_required_count,
+        "totalCount": total_required_count,
+        "progressPercent": progress_percent,
+        "blockedCount": len(blocked_steps),
+        "currentStepCode": current_step.step_template.step_code if current_step else "",
+        "currentStepNo": current_step.step_template.step_no_display if current_step else "",
+        "currentStepName": current_step.step_template.step_name if current_step else "",
+        "currentStepOwner": current_step.owner_actual or current_step.step_template.owners_default or "" if current_step else "",
+    }
+
+
+def _serialize_stage2_groups(instance: ProgressBrokerProjectInstance) -> list[dict]:
+    group_order = {}
+    for item in instance.project_template.stage2_groups:
+        group_order[item.id] = item.sort_no
+
+    steps = sorted(
+        instance.stage2_step_instances,
+        key=lambda item: (group_order.get(item.step_template.group_template_id, 0), item.step_template.sort_no, item.step_template.id),
+    )
+    completed_step_codes = {item.step_template.step_code for item in steps if item.status == "已完成"}
+    grouped: dict[str, dict] = {}
+
+    for step in steps:
+        group_code = step.step_template.group_template.group_code
+        group_name = step.step_template.group_template.group_name
+        group = grouped.setdefault(
+            group_code,
+            {
+                "groupCode": group_code,
+                "groupName": group_name,
+                "completedCount": 0,
+                "totalCount": 0,
+                "steps": [],
+            },
+        )
+        effective_status = _stage2_effective_status(step, completed_step_codes)
+        if not step.step_template.is_optional and step.status not in {"不适用", "已跳过"}:
+            group["totalCount"] += 1
+            if step.status == "已完成":
+                group["completedCount"] += 1
+
+        group["steps"].append(
+            {
+                "stepInstanceId": step.id,
+                "stepCode": step.step_template.step_code,
+                "stepNoDisplay": step.step_template.step_no_display,
+                "stepName": step.step_template.step_name,
+                "ownersDefault": step.step_template.owners_default or "",
+                "ownerActual": step.owner_actual or "",
+                "status": step.status,
+                "effectiveStatus": effective_status,
+                "isOptional": step.step_template.is_optional,
+                "isLastStep": step.step_template.is_last_step,
+                "applicableRule": step.step_template.applicable_rule or "",
+                "dependencyStepCodes": _split_dependency_codes(step.step_template.dependency_step_codes),
+                "remarkTemplate": step.step_template.remark_template or "",
+                "remark": step.remark or "",
+                "blockerReason": step.blocker_reason or "",
+                "startedAt": step.started_at.strftime("%Y-%m-%d") if step.started_at else "",
+                "finishedAt": step.finished_at.strftime("%Y-%m-%d") if step.finished_at else "",
+            }
+        )
+
+    return list(grouped.values())
+
+
+def _build_stage2_summary_simple(instance: ProgressBrokerProjectInstance) -> dict:
+    steps = sorted(
+        instance.stage2_step_instances,
+        key=lambda item: (item.step_template.sort_no, item.step_template.id),
+    )
+    required_steps = [item for item in steps if not item.step_template.is_optional and item.status not in {"不适用", "已跳过"}]
+    blocked_steps = [item for item in steps if item.status == "阻塞"]
+    current_step = None
+    current_step_index = None
+    if blocked_steps:
+        current_step = blocked_steps[0]
+        current_step_index = next((index for index, item in enumerate(steps, start=1) if item.id == current_step.id), None)
+    else:
+        for index, item in enumerate(steps, start=1):
+            if item.status not in {"已完成", "不适用", "已跳过"}:
+                current_step = item
+                current_step_index = index
+                break
+
+    completed_required_count = len([item for item in required_steps if item.status == "已完成"])
+    total_required_count = len(required_steps)
+    progress_percent = round((completed_required_count / total_required_count) * 100) if total_required_count else 0
+
+    if blocked_steps:
+        stage_status = "阻塞"
+    elif current_step is None and total_required_count > 0:
+        stage_status = "已完成"
+    elif completed_required_count > 0:
+        stage_status = "推进中"
+    else:
+        stage_status = "未开始"
+
+    return {
+        "status": stage_status,
+        "completedCount": completed_required_count,
+        "totalCount": total_required_count,
+        "progressPercent": progress_percent,
+        "blockedCount": len(blocked_steps),
+        "currentStepCode": current_step.step_template.step_code if current_step else "",
+        "currentStepNo": str(current_step_index) if current_step_index is not None else "",
+        "currentStepName": current_step.step_template.step_name if current_step else "",
+        "currentStepOwner": current_step.owner_actual or current_step.step_template.owners_default or "" if current_step else "",
+    }
+
+
+def _serialize_stage2_steps_flat(instance: ProgressBrokerProjectInstance) -> list[dict]:
+    steps = sorted(
+        instance.stage2_step_instances,
+        key=lambda item: (item.step_template.sort_no, item.step_template.id),
+    )
+    group = {
+        "groupCode": "all_steps",
+        "groupName": "步骤清单",
+        "completedCount": 0,
+        "totalCount": 0,
+        "steps": [],
+    }
+    for index, step in enumerate(steps, start=1):
+        if not step.step_template.is_optional and step.status not in {"不适用", "已跳过"}:
+            group["totalCount"] += 1
+            if step.status == "已完成":
+                group["completedCount"] += 1
+        group["steps"].append(
+            {
+                "stepInstanceId": step.id,
+                "stepCode": step.step_template.step_code,
+                "stepNoDisplay": str(index),
+                "stepName": step.step_template.step_name,
+                "ownersDefault": step.step_template.owners_default or "",
+                "ownerActual": step.owner_actual or "",
+                "status": step.status,
+                "effectiveStatus": step.status,
+                "isOptional": step.step_template.is_optional,
+                "isLastStep": step.step_template.is_last_step,
+                "applicableRule": "",
+                "dependencyStepCodes": [],
+                "remarkTemplate": step.step_template.remark_template or "",
+                "remark": step.remark or "",
+                "blockerReason": step.blocker_reason or "",
+                "startedAt": step.started_at.strftime("%Y-%m-%d") if step.started_at else "",
+                "finishedAt": step.finished_at.strftime("%Y-%m-%d") if step.finished_at else "",
+            }
+        )
+    return [group]
+
+
 def _calculate_item_percent(item_type: str, status_value: Optional[str], current_num: Optional[int], target_num: Optional[int], is_na: bool) -> int:
     if is_na:
         return 0
@@ -79,7 +398,7 @@ def _calculate_item_percent(item_type: str, status_value: Optional[str], current
 
 
 def _refresh_instance(instance: ProgressBrokerProjectInstance) -> None:
-    valid_values = [item for item in instance.values if not item.is_na]
+    valid_values = [item for item in instance.values if not item.is_na and item.item_template is not None]
     total_weight = 0
     weighted_score = 0
     for value in valid_values:
@@ -144,6 +463,7 @@ def _serialize_value(value: Optional[ProgressItemValue], item: ProgressItemTempl
 
 def _serialize_instance_row(instance: ProgressBrokerProjectInstance, items: list[ProgressItemTemplate]) -> dict:
     value_map = {value.item_template_id: value for value in instance.values}
+    stage2_summary = _build_stage2_summary_simple(instance) if instance.project_template.code == "local_route_upgrade" else None
     return {
         "instanceId": instance.id,
         "brokerId": instance.broker_id,
@@ -155,6 +475,18 @@ def _serialize_instance_row(instance: ProgressBrokerProjectInstance, items: list
         "latestUpdateAt": instance.latest_update_at.strftime("%Y-%m-%d") if instance.latest_update_at else "",
         "milestoneCount": instance.milestone_count,
         "riskCount": instance.risk_count,
+        "stage2": stage2_summary
+        or {
+            "status": "未开始",
+            "completedCount": 0,
+            "totalCount": 0,
+            "progressPercent": 0,
+            "blockedCount": 0,
+            "currentStepCode": "",
+            "currentStepNo": "",
+            "currentStepName": "",
+            "currentStepOwner": "",
+        },
         "values": {
             item.item_key: _serialize_value(value_map.get(item.id), item)
             for item in items
@@ -195,17 +527,291 @@ def list_progress_projects(db: Session = Depends(get_db)) -> dict:
     return ok(rows)
 
 
+@router.post("/projects")
+def create_progress_project(payload: ProgressProjectCreatePayload, db: Session = Depends(get_db)) -> dict:
+    now = datetime.now()
+    project_code = _build_unique_project_code(db, payload.code, payload.name)
+    max_sort_no = db.query(ProgressProjectTemplate).count()
+    template = ProgressProjectTemplate(
+        code=project_code,
+        name=payload.name.strip(),
+        project_type=payload.project_type.strip(),
+        description=(payload.description or "").strip() or None,
+        status=payload.status,
+        sort_no=payload.sort_no if payload.sort_no is not None else max_sort_no + 1,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(template)
+    db.commit()
+    db.refresh(template)
+    return ok(
+        {
+            "projectTemplateId": template.id,
+            "projectCode": template.code,
+            "projectName": template.name,
+        }
+    )
+
+
+@router.post("/projects/{project_template_id}/brokers")
+def add_progress_project_brokers(
+    project_template_id: int,
+    payload: ProgressProjectBrokerAddPayload,
+    db: Session = Depends(get_db),
+) -> dict:
+    template = (
+        db.query(ProgressProjectTemplate)
+        .options(
+            joinedload(ProgressProjectTemplate.items),
+            joinedload(ProgressProjectTemplate.instances).joinedload(ProgressBrokerProjectInstance.stage2_step_instances),
+        )
+        .filter(ProgressProjectTemplate.id == project_template_id)
+        .first()
+    )
+    if template is None:
+        raise HTTPException(status_code=404, detail="Progress project template not found")
+    if not payload.broker_ids:
+        raise HTTPException(status_code=400, detail="Please choose at least one broker")
+
+    brokers = (
+        db.query(Broker)
+        .filter(Broker.id.in_(payload.broker_ids))
+        .order_by(Broker.name.asc())
+        .all()
+    )
+    if not brokers:
+        raise HTTPException(status_code=404, detail="Broker not found")
+
+    existing_broker_ids = {item.broker_id for item in template.instances}
+    added_instances: list[ProgressBrokerProjectInstance] = []
+    for broker in brokers:
+        if broker.id in existing_broker_ids:
+            continue
+        instance = ProgressBrokerProjectInstance(
+            project_template_id=template.id,
+            broker_id=broker.id,
+            input_mode=payload.input_mode,
+            overall_status="未开始",
+            overall_conclusion="未开始",
+            owner_name=(payload.owner_name or "").strip() or None,
+            progress_percent=0,
+            latest_update_at=None,
+            risk_count=0,
+            milestone_count=0,
+            remark=(payload.remark or "").strip() or None,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+        db.add(instance)
+        db.flush()
+        for item_template in template.items:
+            db.add(_create_default_value(instance.id, item_template))
+        instance.stage2_step_instances = []
+        _create_stage2_step_instances(instance, db)
+        added_instances.append(instance)
+
+    if not added_instances:
+        return ok({"addedCount": 0})
+
+    db.commit()
+    return ok({"addedCount": len(added_instances)})
+
+
+@router.post("/projects/{project_template_id}/items")
+def create_progress_project_item(
+    project_template_id: int,
+    payload: ProgressItemTemplateCreatePayload,
+    db: Session = Depends(get_db),
+) -> dict:
+    template = (
+        db.query(ProgressProjectTemplate)
+        .options(joinedload(ProgressProjectTemplate.items), joinedload(ProgressProjectTemplate.instances))
+        .filter(ProgressProjectTemplate.id == project_template_id)
+        .first()
+    )
+    if template is None:
+        raise HTTPException(status_code=404, detail="Progress project template not found")
+    if payload.item_type not in {"status", "number_progress", "boolean", "text"}:
+        raise HTTPException(status_code=400, detail="Unsupported item type")
+
+    item_key = _build_unique_item_key(project_template_id, payload.item_key, payload.item_label, db)
+    group_key = None
+    if payload.group_key or payload.group_label:
+        if payload.group_key:
+            group_key = _normalize_key(payload.group_key, "group")
+        elif payload.group_label:
+            existing_group_item = (
+                db.query(ProgressItemTemplate)
+                .filter(
+                    ProgressItemTemplate.project_template_id == project_template_id,
+                    ProgressItemTemplate.group_label == payload.group_label.strip(),
+                    ProgressItemTemplate.group_key.isnot(None),
+                )
+                .first()
+            )
+            group_key = existing_group_item.group_key if existing_group_item else _normalize_key(payload.group_label, "group")
+    max_sort_no = max([item.sort_no for item in template.items], default=0)
+    item_template = ProgressItemTemplate(
+        project_template_id=template.id,
+        item_key=item_key,
+        item_label=payload.item_label.strip(),
+        group_key=group_key,
+        group_label=(payload.group_label or "").strip() or None,
+        item_type=payload.item_type,
+        weight=payload.weight,
+        allow_na=payload.allow_na,
+        sort_no=payload.sort_no if payload.sort_no is not None else max_sort_no + 1,
+        value_rule=(payload.value_rule or "").strip() or None,
+        remark=(payload.remark or "").strip() or None,
+    )
+    db.add(item_template)
+    db.flush()
+
+    for instance in template.instances:
+        default_value = _create_default_value(instance.id, item_template)
+        default_value.item_template = item_template
+        db.add(default_value)
+        instance.values.append(default_value)
+        _refresh_instance(instance)
+        instance.updated_at = datetime.now()
+        db.add(instance)
+
+    db.commit()
+    return ok(
+        {
+            "itemTemplateId": item_template.id,
+            "itemKey": item_template.item_key,
+            "itemLabel": item_template.item_label,
+        }
+    )
+
+
+@router.put("/projects/{project_template_id}/items/{item_template_id}")
+def update_progress_project_item(
+    project_template_id: int,
+    item_template_id: int,
+    payload: ProgressItemTemplateCreatePayload,
+    db: Session = Depends(get_db),
+) -> dict:
+    item_template = (
+        db.query(ProgressItemTemplate)
+        .filter(
+            ProgressItemTemplate.id == item_template_id,
+            ProgressItemTemplate.project_template_id == project_template_id,
+        )
+        .first()
+    )
+    if item_template is None:
+        raise HTTPException(status_code=404, detail="Progress item template not found")
+    if payload.item_type != item_template.item_type:
+        raise HTTPException(status_code=400, detail="Item type cannot be changed after creation")
+
+    item_template.item_label = payload.item_label.strip()
+    if payload.group_key or payload.group_label:
+        if payload.group_key:
+            item_template.group_key = _normalize_key(payload.group_key, "group")
+        elif payload.group_label:
+            existing_group_item = (
+                db.query(ProgressItemTemplate)
+                .filter(
+                    ProgressItemTemplate.project_template_id == project_template_id,
+                    ProgressItemTemplate.id != item_template_id,
+                    ProgressItemTemplate.group_label == payload.group_label.strip(),
+                    ProgressItemTemplate.group_key.isnot(None),
+                )
+                .first()
+            )
+            item_template.group_key = existing_group_item.group_key if existing_group_item else _normalize_key(payload.group_label, "group")
+        item_template.group_label = payload.group_label.strip() if payload.group_label else None
+    else:
+        item_template.group_key = None
+        item_template.group_label = None
+    item_template.weight = payload.weight
+    item_template.allow_na = payload.allow_na
+    if payload.sort_no is not None:
+        item_template.sort_no = payload.sort_no
+    item_template.value_rule = (payload.value_rule or "").strip() or None
+    item_template.remark = (payload.remark or "").strip() or None
+
+    instances = (
+        db.query(ProgressBrokerProjectInstance)
+        .options(
+            joinedload(ProgressBrokerProjectInstance.values).joinedload(ProgressItemValue.item_template),
+            joinedload(ProgressBrokerProjectInstance.logs),
+            joinedload(ProgressBrokerProjectInstance.risks),
+        )
+        .filter(ProgressBrokerProjectInstance.project_template_id == project_template_id)
+        .all()
+    )
+    for instance in instances:
+        _refresh_instance(instance)
+        db.add(instance)
+
+    db.commit()
+    return ok({"itemTemplateId": item_template.id})
+
+
+@router.delete("/projects/{project_template_id}/items/{item_template_id}")
+def delete_progress_project_item(project_template_id: int, item_template_id: int, db: Session = Depends(get_db)) -> dict:
+    item_template = (
+        db.query(ProgressItemTemplate)
+        .filter(
+            ProgressItemTemplate.id == item_template_id,
+            ProgressItemTemplate.project_template_id == project_template_id,
+        )
+        .first()
+    )
+    if item_template is None:
+        raise HTTPException(status_code=404, detail="Progress item template not found")
+
+    instance_ids = [
+        item.id
+        for item in db.query(ProgressBrokerProjectInstance.id)
+        .filter(ProgressBrokerProjectInstance.project_template_id == project_template_id)
+        .all()
+    ]
+
+    db.query(ProgressLog).filter(ProgressLog.item_template_id == item_template_id).update(
+        {ProgressLog.item_template_id: None},
+        synchronize_session=False,
+    )
+    db.query(ProgressItemValue).filter(ProgressItemValue.item_template_id == item_template_id).delete(synchronize_session=False)
+    db.delete(item_template)
+    db.flush()
+
+    if instance_ids:
+        instances = (
+            db.query(ProgressBrokerProjectInstance)
+            .options(
+                joinedload(ProgressBrokerProjectInstance.values).joinedload(ProgressItemValue.item_template),
+                joinedload(ProgressBrokerProjectInstance.logs),
+                joinedload(ProgressBrokerProjectInstance.risks),
+            )
+            .filter(ProgressBrokerProjectInstance.id.in_(instance_ids))
+            .all()
+        )
+        for instance in instances:
+            _refresh_instance(instance)
+            db.add(instance)
+
+    db.commit()
+    return ok({"deleted": True})
+
+
 @router.get("/projects/{project_template_id}/matrix")
 def get_progress_matrix(project_template_id: int, db: Session = Depends(get_db)) -> dict:
     template = (
         db.query(ProgressProjectTemplate)
         .options(
-            joinedload(ProgressProjectTemplate.items),
-            joinedload(ProgressProjectTemplate.instances)
-            .joinedload(ProgressBrokerProjectInstance.broker),
-            joinedload(ProgressProjectTemplate.instances)
-            .joinedload(ProgressBrokerProjectInstance.values)
+            selectinload(ProgressProjectTemplate.items),
+            selectinload(ProgressProjectTemplate.instances).joinedload(ProgressBrokerProjectInstance.broker),
+            selectinload(ProgressProjectTemplate.instances)
+            .selectinload(ProgressBrokerProjectInstance.values)
             .joinedload(ProgressItemValue.item_template),
+            selectinload(ProgressProjectTemplate.instances)
+            .selectinload(ProgressBrokerProjectInstance.stage2_step_instances)
+            .joinedload(ProgressStage2StepInstance.step_template),
         )
         .filter(ProgressProjectTemplate.id == project_template_id)
         .first()
@@ -251,8 +857,6 @@ def get_progress_matrix(project_template_id: int, db: Session = Depends(get_db))
 def list_progress_brokers(db: Session = Depends(get_db)) -> dict:
     brokers = (
         db.query(Broker)
-        .join(ProgressBrokerProjectInstance, ProgressBrokerProjectInstance.broker_id == Broker.id)
-        .distinct()
         .order_by(Broker.name.asc())
         .all()
     )
@@ -299,11 +903,16 @@ def get_progress_instance_detail(instance_id: int, db: Session = Depends(get_db)
     instance = (
         db.query(ProgressBrokerProjectInstance)
         .options(
-            joinedload(ProgressBrokerProjectInstance.project_template).joinedload(ProgressProjectTemplate.items),
+            selectinload(ProgressBrokerProjectInstance.project_template).selectinload(ProgressProjectTemplate.items),
+            selectinload(ProgressBrokerProjectInstance.project_template).selectinload(ProgressProjectTemplate.stage2_groups),
+            selectinload(ProgressBrokerProjectInstance.project_template).selectinload(ProgressProjectTemplate.stage2_steps),
             joinedload(ProgressBrokerProjectInstance.broker),
-            joinedload(ProgressBrokerProjectInstance.values).joinedload(ProgressItemValue.item_template),
-            joinedload(ProgressBrokerProjectInstance.logs).joinedload(ProgressLog.item_template),
-            joinedload(ProgressBrokerProjectInstance.risks),
+            selectinload(ProgressBrokerProjectInstance.values).joinedload(ProgressItemValue.item_template),
+            selectinload(ProgressBrokerProjectInstance.logs).joinedload(ProgressLog.item_template),
+            selectinload(ProgressBrokerProjectInstance.risks),
+            selectinload(ProgressBrokerProjectInstance.stage2_step_instances)
+            .joinedload(ProgressStage2StepInstance.step_template)
+            .joinedload(ProgressStage2StepTemplate.group_template),
         )
         .filter(ProgressBrokerProjectInstance.id == instance_id)
         .first()
@@ -330,6 +939,8 @@ def get_progress_instance_detail(instance_id: int, db: Session = Depends(get_db)
                 "milestoneCount": instance.milestone_count,
                 "remark": instance.remark or "",
             },
+            "stage2": _build_stage2_summary_simple(instance) if instance.project_template.code == "local_route_upgrade" else None,
+            "stage2Groups": _serialize_stage2_steps_flat(instance) if instance.project_template.code == "local_route_upgrade" else [],
             "progressItems": [
                 {
                     "itemTemplateId": item.id,
@@ -625,6 +1236,271 @@ def update_progress_item_value(
     return ok({"instanceId": instance.id, "progressPercent": instance.progress_percent})
 
 
+@router.post("/instances/{instance_id}/stage2/steps/{step_instance_id}/update")
+def update_progress_stage2_step(
+    instance_id: int,
+    step_instance_id: int,
+    payload: ProgressStage2StepUpdatePayload,
+    db: Session = Depends(get_db),
+) -> dict:
+    instance = (
+        db.query(ProgressBrokerProjectInstance)
+        .options(
+            joinedload(ProgressBrokerProjectInstance.logs),
+            joinedload(ProgressBrokerProjectInstance.stage2_step_instances)
+            .joinedload(ProgressStage2StepInstance.step_template)
+            .joinedload(ProgressStage2StepTemplate.group_template),
+        )
+        .filter(ProgressBrokerProjectInstance.id == instance_id)
+        .first()
+    )
+    if instance is None:
+        raise HTTPException(status_code=404, detail="Progress instance not found")
+
+    step_instance = next((item for item in instance.stage2_step_instances if item.id == step_instance_id), None)
+    if step_instance is None:
+        raise HTTPException(status_code=404, detail="Stage2 step instance not found")
+
+    before_status = step_instance.status
+    before_snapshot = (
+        step_instance.step_template.step_no_display,
+        step_instance.step_template.step_name,
+        step_instance.owner_actual,
+        step_instance.status,
+        step_instance.remark,
+        step_instance.blocker_reason,
+    )
+
+    if payload.step_no_display:
+        step_instance.step_template.step_no_display = payload.step_no_display.strip()
+    if payload.step_name:
+        step_instance.step_template.step_name = payload.step_name.strip()
+
+    step_instance.owner_actual = payload.owner_actual
+    step_instance.status = payload.status
+    step_instance.remark = payload.remark
+    step_instance.blocker_reason = payload.blocker_reason
+    step_instance.started_at = payload.started_at or step_instance.started_at or (datetime.now() if payload.status in {"进行中", "阻塞", "已完成"} else None)
+    if payload.status == "已完成":
+        step_instance.finished_at = payload.finished_at or step_instance.finished_at or datetime.now()
+    elif payload.status not in {"已完成", "已跳过", "不适用"}:
+        step_instance.finished_at = payload.finished_at
+    step_instance.updated_at = datetime.now()
+
+    after_snapshot = (
+        step_instance.step_template.step_no_display,
+        step_instance.step_template.step_name,
+        step_instance.owner_actual,
+        step_instance.status,
+        step_instance.remark,
+        step_instance.blocker_reason,
+    )
+    if before_snapshot != after_snapshot:
+        log = ProgressLog(
+            broker_project_instance_id=instance.id,
+            item_template_id=None,
+            log_date=datetime.now(),
+            content=_build_stage2_auto_log_content(step_instance.step_template, before_status, step_instance.status),
+            progress_delta=0,
+            progress_after=instance.progress_percent,
+            is_milestone=False,
+            remark=step_instance.remark,
+            created_by="系统自动记录",
+            created_at=datetime.now(),
+        )
+        db.add(log)
+        db.flush()
+        instance.logs.append(log)
+        _refresh_instance(instance)
+
+    db.add(instance)
+    db.commit()
+    return ok({"stepInstanceId": step_instance.id})
+
+
+@router.post("/instances/{instance_id}/stage2/steps")
+def create_progress_stage2_step(
+    instance_id: int,
+    payload: ProgressStage2StepCreatePayload,
+    db: Session = Depends(get_db),
+) -> dict:
+    instance = (
+        db.query(ProgressBrokerProjectInstance)
+        .options(
+            joinedload(ProgressBrokerProjectInstance.logs),
+            joinedload(ProgressBrokerProjectInstance.stage2_step_instances).joinedload(ProgressStage2StepInstance.step_template),
+        )
+        .filter(ProgressBrokerProjectInstance.id == instance_id)
+        .first()
+    )
+    if instance is None:
+        raise HTTPException(status_code=404, detail="Progress instance not found")
+
+    group = _ensure_stage2_default_group(instance.project_template_id, db)
+    max_sort_no = max([item.step_template.sort_no for item in instance.stage2_step_instances], default=0)
+    step_template = ProgressStage2StepTemplate(
+        project_template_id=instance.project_template_id,
+        group_template_id=group.id,
+        step_code=_normalize_key(payload.step_no_display or payload.step_name, "stage2_step"),
+        step_no_display=payload.step_no_display.strip(),
+        step_name=payload.step_name.strip(),
+        owners_default=payload.owner_actual,
+        is_optional=False,
+        is_last_step=False,
+        applicable_rule=None,
+        dependency_step_codes=None,
+        remark_template=None,
+        sort_no=max_sort_no + 1,
+    )
+    db.add(step_template)
+    db.flush()
+
+    step_instance = ProgressStage2StepInstance(
+        broker_project_instance_id=instance.id,
+        step_template_id=step_template.id,
+        owner_actual=payload.owner_actual,
+        status=payload.status,
+        remark=payload.remark,
+        blocker_reason=None,
+        started_at=payload.started_at,
+        finished_at=payload.finished_at,
+        updated_at=datetime.now(),
+    )
+    db.add(step_instance)
+    db.flush()
+    instance.stage2_step_instances.append(step_instance)
+
+    auto_log = ProgressLog(
+        broker_project_instance_id=instance.id,
+        item_template_id=None,
+        log_date=datetime.now(),
+        content=f"阶段2新增步骤：{step_template.step_no_display} {step_template.step_name}",
+        progress_delta=0,
+        progress_after=instance.progress_percent,
+        is_milestone=False,
+        remark=payload.remark,
+        created_by="系统管理员",
+        created_at=datetime.now(),
+    )
+    db.add(auto_log)
+    db.flush()
+    instance.logs.append(auto_log)
+    _refresh_instance(instance)
+    db.add(instance)
+    db.commit()
+    return ok({"stepInstanceId": step_instance.id})
+
+
+@router.post("/instances/{instance_id}/stage2/steps/{step_instance_id}/move")
+def move_progress_stage2_step(
+    instance_id: int,
+    step_instance_id: int,
+    payload: ProgressStage2StepMovePayload,
+    db: Session = Depends(get_db),
+) -> dict:
+    if payload.direction not in {"up", "down"}:
+        raise HTTPException(status_code=400, detail="Unsupported move direction")
+
+    instance = (
+        db.query(ProgressBrokerProjectInstance)
+        .options(
+            joinedload(ProgressBrokerProjectInstance.logs),
+            joinedload(ProgressBrokerProjectInstance.stage2_step_instances).joinedload(ProgressStage2StepInstance.step_template),
+        )
+        .filter(ProgressBrokerProjectInstance.id == instance_id)
+        .first()
+    )
+    if instance is None:
+        raise HTTPException(status_code=404, detail="Progress instance not found")
+
+    ordered_steps = sorted(
+        instance.stage2_step_instances,
+        key=lambda item: (item.step_template.sort_no, item.step_template.id),
+    )
+    current_index = next((index for index, item in enumerate(ordered_steps) if item.id == step_instance_id), None)
+    if current_index is None:
+        raise HTTPException(status_code=404, detail="Stage2 step instance not found")
+
+    target_index = current_index - 1 if payload.direction == "up" else current_index + 1
+    if target_index < 0 or target_index >= len(ordered_steps):
+        return ok({"moved": False})
+
+    current_step = ordered_steps[current_index]
+    target_step = ordered_steps[target_index]
+    current_sort_no = current_step.step_template.sort_no
+    current_step.step_template.sort_no = target_step.step_template.sort_no
+    target_step.step_template.sort_no = current_sort_no
+
+    auto_log = ProgressLog(
+        broker_project_instance_id=instance.id,
+        item_template_id=None,
+        log_date=datetime.now(),
+        content=f"阶段2步骤排序调整：{current_step.step_template.step_name}",
+        progress_delta=0,
+        progress_after=instance.progress_percent,
+        is_milestone=False,
+        remark=f"方向：{payload.direction}",
+        created_by="系统管理员",
+        created_at=datetime.now(),
+    )
+    db.add(auto_log)
+    db.flush()
+    instance.logs.append(auto_log)
+    _refresh_instance(instance)
+    db.add(instance)
+    db.commit()
+    return ok({"moved": True})
+
+
+@router.delete("/instances/{instance_id}/stage2/steps/{step_instance_id}")
+def delete_progress_stage2_step(instance_id: int, step_instance_id: int, db: Session = Depends(get_db)) -> dict:
+    instance = (
+        db.query(ProgressBrokerProjectInstance)
+        .options(
+            joinedload(ProgressBrokerProjectInstance.logs),
+            joinedload(ProgressBrokerProjectInstance.stage2_step_instances).joinedload(ProgressStage2StepInstance.step_template),
+        )
+        .filter(ProgressBrokerProjectInstance.id == instance_id)
+        .first()
+    )
+    if instance is None:
+        raise HTTPException(status_code=404, detail="Progress instance not found")
+
+    step_instance = next((item for item in instance.stage2_step_instances if item.id == step_instance_id), None)
+    if step_instance is None:
+        raise HTTPException(status_code=404, detail="Stage2 step instance not found")
+
+    step_template = step_instance.step_template
+    if step_instance in instance.stage2_step_instances:
+        instance.stage2_step_instances.remove(step_instance)
+    db.delete(step_instance)
+    db.flush()
+
+    remaining_count = db.query(ProgressStage2StepInstance).filter(ProgressStage2StepInstance.step_template_id == step_template.id).count()
+    if remaining_count == 0:
+        db.delete(step_template)
+
+    auto_log = ProgressLog(
+        broker_project_instance_id=instance.id,
+        item_template_id=None,
+        log_date=datetime.now(),
+        content=f"阶段2删除步骤：{step_template.step_no_display} {step_template.step_name}",
+        progress_delta=0,
+        progress_after=instance.progress_percent,
+        is_milestone=False,
+        remark=None,
+        created_by="系统管理员",
+        created_at=datetime.now(),
+    )
+    db.add(auto_log)
+    db.flush()
+    instance.logs.append(auto_log)
+    _refresh_instance(instance)
+    db.add(instance)
+    db.commit()
+    return ok({"deleted": True})
+
+
 @router.post("/instances/{instance_id}/logs")
 def create_progress_log(instance_id: int, payload: ProgressLogCreatePayload, db: Session = Depends(get_db)) -> dict:
     instance = (
@@ -653,6 +1529,39 @@ def create_progress_log(instance_id: int, payload: ProgressLogCreatePayload, db:
     instance.logs.append(log)
     _refresh_instance(instance)
     db.add(instance)
+    db.commit()
+    return ok({"id": log.id})
+
+
+@router.put("/logs/{log_id}")
+def update_progress_log(log_id: int, payload: ProgressLogUpdatePayload, db: Session = Depends(get_db)) -> dict:
+    log = (
+        db.query(ProgressLog)
+        .options(
+            joinedload(ProgressLog.instance)
+            .joinedload(ProgressBrokerProjectInstance.logs),
+            joinedload(ProgressLog.instance)
+            .joinedload(ProgressBrokerProjectInstance.values)
+            .joinedload(ProgressItemValue.item_template),
+            joinedload(ProgressLog.instance)
+            .joinedload(ProgressBrokerProjectInstance.risks),
+        )
+        .filter(ProgressLog.id == log_id)
+        .first()
+    )
+    if log is None:
+        raise HTTPException(status_code=404, detail="Progress log not found")
+
+    log.item_template_id = payload.item_template_id
+    log.log_date = payload.log_date
+    log.content = payload.content
+    log.progress_delta = payload.progress_delta
+    log.progress_after = payload.progress_after
+    log.is_milestone = payload.is_milestone
+    log.remark = payload.remark
+
+    _refresh_instance(log.instance)
+    db.add(log.instance)
     db.commit()
     return ok({"id": log.id})
 

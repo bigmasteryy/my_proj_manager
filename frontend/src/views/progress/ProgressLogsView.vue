@@ -53,6 +53,11 @@
             <StatusTag :label="row.isMilestone ? '里程碑' : '普通记录'" />
           </template>
         </el-table-column>
+        <el-table-column label="备注" min-width="220">
+          <template #default="{ row }">
+            <div class="table-multiline">{{ row.remark || "-" }}</div>
+          </template>
+        </el-table-column>
       </el-table>
       <EmptyBlock
         v-else

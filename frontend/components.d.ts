@@ -39,10 +39,14 @@ declare module 'vue' {
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     EmptyBlock: typeof import('./src/components/EmptyBlock.vue')['default']
     ProgressValueDisplay: typeof import('./src/components/ProgressValueDisplay.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     StatusTag: typeof import('./src/components/StatusTag.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

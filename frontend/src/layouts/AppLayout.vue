@@ -98,17 +98,16 @@
 
     <el-container>
       <el-header class="app-header">
-        <div>
-          <p class="eyebrow">管理视图</p>
+        <div class="header-main">
           <h2>{{ isAdmin ? "项目总控台" : "个人任务中心" }}</h2>
+          <span class="compact-note" v-if="currentUser">{{ currentUser.displayName }} / {{ roleLabel }}</span>
         </div>
         <div class="header-actions">
-          <span class="compact-note" v-if="currentUser">{{ currentUser.displayName }} / {{ roleLabel }}</span>
-          <el-button v-if="currentUser?.role === 'admin'" @click="handleResetDemoData">重置演示数据</el-button>
-          <el-button type="primary" @click="router.push(isAdmin ? '/progress/overview' : '/personal/daily')">
+          <el-button v-if="currentUser?.role === 'admin'" size="small" @click="handleResetDemoData">重置演示数据</el-button>
+          <el-button size="small" type="primary" @click="router.push(isAdmin ? '/progress/overview' : '/personal/daily')">
             {{ isAdmin ? "查看项目总览" : "查看每日任务" }}
           </el-button>
-          <el-button @click="handleLogout">退出登录</el-button>
+          <el-button size="small" @click="handleLogout">退出登录</el-button>
         </div>
       </el-header>
       <el-main class="app-main">
@@ -267,18 +266,31 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   height: auto;
-  padding: 22px 28px 10px;
+  padding: 8px 28px 4px;
 }
 
 .app-main {
   padding: 12px 28px 28px;
 }
 
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.header-main h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 

@@ -205,6 +205,8 @@ class ProgressProjectTemplate(Base):
 
     items = relationship("ProgressItemTemplate", back_populates="project_template", cascade="all, delete-orphan")
     instances = relationship("ProgressBrokerProjectInstance", back_populates="project_template", cascade="all, delete-orphan")
+    stage2_groups = relationship("ProgressStage2GroupTemplate", back_populates="project_template", cascade="all, delete-orphan")
+    stage2_steps = relationship("ProgressStage2StepTemplate", back_populates="project_template", cascade="all, delete-orphan")
 
 
 class ProgressItemTemplate(Base):
@@ -251,6 +253,7 @@ class ProgressBrokerProjectInstance(Base):
     values = relationship("ProgressItemValue", back_populates="instance", cascade="all, delete-orphan")
     logs = relationship("ProgressLog", back_populates="instance", cascade="all, delete-orphan")
     risks = relationship("ProgressRisk", back_populates="instance", cascade="all, delete-orphan")
+    stage2_step_instances = relationship("ProgressStage2StepInstance", back_populates="instance", cascade="all, delete-orphan")
 
 
 class ProgressItemValue(Base):
@@ -309,3 +312,57 @@ class ProgressRisk(Base):
     updated_at = Column(DateTime, nullable=False)
 
     instance = relationship("ProgressBrokerProjectInstance", back_populates="risks")
+
+
+class ProgressStage2GroupTemplate(Base):
+    __tablename__ = "progress_stage2_group_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_template_id = Column(Integer, ForeignKey("progress_project_templates.id"), nullable=False)
+    group_code = Column(String(50), nullable=False)
+    group_name = Column(String(100), nullable=False)
+    sort_no = Column(Integer, nullable=False, default=0)
+    remark = Column(Text, nullable=True)
+
+    project_template = relationship("ProgressProjectTemplate", back_populates="stage2_groups")
+    step_templates = relationship("ProgressStage2StepTemplate", back_populates="group_template", cascade="all, delete-orphan")
+
+
+class ProgressStage2StepTemplate(Base):
+    __tablename__ = "progress_stage2_step_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_template_id = Column(Integer, ForeignKey("progress_project_templates.id"), nullable=False)
+    group_template_id = Column(Integer, ForeignKey("progress_stage2_group_templates.id"), nullable=False)
+    step_code = Column(String(50), nullable=False)
+    step_no_display = Column(String(20), nullable=False)
+    step_name = Column(String(255), nullable=False)
+    owners_default = Column(String(255), nullable=True)
+    is_optional = Column(Boolean, nullable=False, default=False)
+    is_last_step = Column(Boolean, nullable=False, default=False)
+    applicable_rule = Column(Text, nullable=True)
+    dependency_step_codes = Column(String(255), nullable=True)
+    remark_template = Column(Text, nullable=True)
+    sort_no = Column(Integer, nullable=False, default=0)
+
+    project_template = relationship("ProgressProjectTemplate", back_populates="stage2_steps")
+    group_template = relationship("ProgressStage2GroupTemplate", back_populates="step_templates")
+    step_instances = relationship("ProgressStage2StepInstance", back_populates="step_template", cascade="all, delete-orphan")
+
+
+class ProgressStage2StepInstance(Base):
+    __tablename__ = "progress_stage2_step_instances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    broker_project_instance_id = Column(Integer, ForeignKey("progress_broker_project_instances.id"), nullable=False)
+    step_template_id = Column(Integer, ForeignKey("progress_stage2_step_templates.id"), nullable=False)
+    owner_actual = Column(String(255), nullable=True)
+    status = Column(String(20), nullable=False, default="未开始")
+    remark = Column(Text, nullable=True)
+    blocker_reason = Column(Text, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    finished_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=False)
+
+    instance = relationship("ProgressBrokerProjectInstance", back_populates="stage2_step_instances")
+    step_template = relationship("ProgressStage2StepTemplate", back_populates="step_instances")
