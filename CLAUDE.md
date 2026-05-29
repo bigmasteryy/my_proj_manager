@@ -16,13 +16,14 @@
 接手时优先阅读这些文件：
 
 1. `docs/PROJECT_HANDOFF_FOR_CLAUDE.md`
-2. `backend/app/main.py`
-3. `backend/app/api/v1/router.py`
-4. `backend/app/db/models.py`
-5. `backend/app/db/session.py`
-6. `frontend/src/router/index.ts`
-7. `frontend/src/api/client.ts`
-8. `scripts/start-services.ps1`
+2. `docs/DEPLOYMENT_SYNC_GUIDE.md`
+3. `backend/app/main.py`
+4. `backend/app/api/v1/router.py`
+5. `backend/app/db/models.py`
+6. `backend/app/db/session.py`
+7. `frontend/src/router/index.ts`
+8. `frontend/src/api/client.ts`
+9. `scripts/start-services.ps1`
 
 ## 3. 本地启动
 
@@ -93,4 +94,3 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-services.ps1
   - 建立正式迁移脚本
   - 梳理 seed 与正式数据的边界
   - 补充鉴权、审计、测试和部署说明
-
