@@ -1,0 +1,809 @@
+<style>
+  :root {
+    --bg: #eef3f8;
+    --panel: rgba(255, 255, 255, 0.92);
+    --border: #dbe5f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --orange: #ea580c;
+    --orange-soft: #ffedd5;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+      linear-gradient(180deg, #f8fbff, var(--bg));
+  }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    border-radius: 24px;
+    padding: 20px 18px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .brand {
+    margin-bottom: 18px;
+  }
+
+  .brand h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  .brand p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .nav-group {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .nav-title {
+    padding: 8px 10px 2px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .nav-item {
+    padding: 11px 12px;
+    border-radius: 14px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+  }
+
+  .nav-item.active {
+    color: #0f172a;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .content-shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .hero-kicker {
+    margin-bottom: 10px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-copy h1 {
+    margin: 0 0 8px;
+    font-size: 34px;
+    color: var(--text);
+    line-height: 1.08;
+  }
+
+  .hero-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 760px;
+  }
+
+  .segmented {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 16px;
+    background: #f8fbff;
+    border: 1px solid var(--border);
+    gap: 4px;
+  }
+
+  .segmented button {
+    border: 0;
+    background: transparent;
+    color: #334155;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .segmented button.active {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.24);
+  }
+
+  .screen {
+    display: none;
+    gap: 18px;
+  }
+
+  .screen.active {
+    display: grid;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .stat {
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  }
+
+  .stat-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 0.9fr);
+    gap: 18px;
+  }
+
+  .panel,
+  .aside-card {
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .panel {
+    padding: 22px;
+  }
+
+  .aside-stack {
+    display: grid;
+    gap: 16px;
+  }
+
+  .aside-card {
+    padding: 20px;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-head h2,
+  .section-head h3 {
+    margin: 0;
+    color: var(--text);
+  }
+
+  .section-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .link {
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .mini-card {
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #fff, #f8fbff);
+    padding: 16px;
+  }
+
+  .mini-card h4 {
+    margin: 0 0 6px;
+    color: var(--text);
+    font-size: 18px;
+  }
+
+  .mini-card p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+    min-height: 38px;
+    line-height: 1.5;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .metric {
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+
+  .metric span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 5px;
+  }
+
+  .metric strong {
+    font-size: 17px;
+    color: var(--text);
+  }
+
+  .table {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .row {
+    display: grid;
+    align-items: center;
+  }
+
+  .row.projects {
+    grid-template-columns: 2fr 0.9fr 0.9fr 0.85fr 0.85fr 0.8fr 0.9fr 0.8fr 0.9fr;
+  }
+
+  .row.brokers {
+    grid-template-columns: 1.4fr 0.9fr 0.85fr 0.9fr 0.95fr 0.95fr 0.85fr 0.8fr 0.8fr;
+  }
+
+  .row.header {
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+  }
+
+  .row:not(.header) {
+    border-top: 1px solid #edf2f7;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .row > div {
+    padding: 13px 14px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .pill-blue { background: var(--blue-soft); color: #1d4ed8; }
+  .pill-green { background: var(--green-soft); color: #166534; }
+  .pill-orange { background: var(--orange-soft); color: #c2410c; }
+  .pill-red { background: var(--red-soft); color: #b91c1c; }
+
+  .list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .list-item {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #f8fafc;
+    padding: 14px 15px;
+  }
+
+  .list-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .list-title {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .list-meta {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+</style>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>项目管理平台</h2>
+      <p>把这两张总览页收进现有系统的导航结构里，直接作为一级入口使用。</p>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">总览</div>
+      <div class="nav-item active">项目总览</div>
+      <div class="nav-item">券商总览</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">推进</div>
+      <div class="nav-item">项目推进矩阵</div>
+      <div class="nav-item">排期中心</div>
+      <div class="nav-item">问题中心</div>
+      <div class="nav-item">协作任务</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">基础资料</div>
+      <div class="nav-item">券商列表</div>
+      <div class="nav-item">服务器</div>
+      <div class="nav-item">委托主站</div>
+      <div class="nav-item">版本管理</div>
+    </div>
+  </aside>
+
+  <div class="content-shell">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="hero-kicker">双总览首页 / 集成到现有系统</div>
+        <h1>项目总览看推进，券商总览看经营，全都回到同一套系统里</h1>
+        <p>
+          这版不再是独立概念页，而是按照现有项目管理平台的菜单结构来展示。
+          同时把原来“客户”的口径统一替换成“券商”，便于和你现在系统里已有的券商管理、推进矩阵保持一致。
+        </p>
+      </div>
+      <div class="segmented">
+        <button class="active" onclick="showScreen('project')">项目总览</button>
+        <button onclick="showScreen('broker')">券商总览</button>
+      </div>
+    </div>
+
+    <div id="screen-project" class="screen active">
+      <div class="stats">
+        <div class="stat"><div class="stat-label">重点项目数</div><div class="stat-value">6</div></div>
+        <div class="stat"><div class="stat-label">推进中券商数</div><div class="stat-value">28</div></div>
+        <div class="stat"><div class="stat-label">已完成券商数</div><div class="stat-value">11</div></div>
+        <div class="stat"><div class="stat-label">灰度中券商数</div><div class="stat-value">7</div></div>
+        <div class="stat"><div class="stat-label">高风险项目数</div><div class="stat-value">3</div></div>
+      </div>
+
+      <div class="workspace">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h2>重点项目推进</h2>
+              <p>上面先扫重点项目，下面的总表负责排序、筛选和真正下钻。</p>
+            </div>
+            <div class="link">查看全部项目</div>
+          </div>
+
+          <div class="cards">
+            <div class="mini-card">
+              <h4>本地路由升级</h4>
+              <p>共享项目推进最复杂，仍是当前第一优先级。</p>
+              <div class="grid-2">
+                <div class="metric"><span>已完成</span><strong>9</strong></div>
+                <div class="metric"><span>灰度中</span><strong>3</strong></div>
+                <div class="metric"><span>未开始</span><strong>4</strong></div>
+                <div class="metric"><span>平均进度</span><strong>54%</strong></div>
+              </div>
+              <div class="link">查看矩阵</div>
+            </div>
+
+            <div class="mini-card">
+              <h4>Linux 主站推进</h4>
+              <p>重点盯升级包准备、测试安排、灰度窗口。</p>
+              <div class="grid-2">
+                <div class="metric"><span>已完成</span><strong>2</strong></div>
+                <div class="metric"><span>灰度中</span><strong>1</strong></div>
+                <div class="metric"><span>未开始</span><strong>10</strong></div>
+                <div class="metric"><span>平均进度</span><strong>21%</strong></div>
+              </div>
+              <div class="link">查看矩阵</div>
+            </div>
+
+            <div class="mini-card">
+              <h4>信创推进</h4>
+              <p>准备期项目，当前主要盯兼容验证与验收计划。</p>
+              <div class="grid-2">
+                <div class="metric"><span>已完成</span><strong>0</strong></div>
+                <div class="metric"><span>灰度中</span><strong>0</strong></div>
+                <div class="metric"><span>未开始</span><strong>15</strong></div>
+                <div class="metric"><span>平均进度</span><strong>9%</strong></div>
+              </div>
+              <div class="link">查看矩阵</div>
+            </div>
+          </div>
+
+          <div class="table">
+            <div class="row projects header">
+              <div>项目名称</div>
+              <div>状态</div>
+              <div>覆盖券商</div>
+              <div>已完成</div>
+              <div>灰度中</div>
+              <div>待办数</div>
+              <div>风险数</div>
+              <div>最近更新</div>
+              <div>操作</div>
+            </div>
+            <div class="row projects">
+              <div><strong>本地路由升级</strong></div>
+              <div><span class="pill pill-blue">推进中</span></div>
+              <div>21</div>
+              <div>9</div>
+              <div>3</div>
+              <div>12</div>
+              <div>3</div>
+              <div>2026-05-12</div>
+              <div class="link">查看矩阵</div>
+            </div>
+            <div class="row projects">
+              <div><strong>Linux 主站推进</strong></div>
+              <div><span class="pill pill-orange">筹备中</span></div>
+              <div>21</div>
+              <div>2</div>
+              <div>1</div>
+              <div>8</div>
+              <div>2</div>
+              <div>2026-05-11</div>
+              <div class="link">查看排期</div>
+            </div>
+            <div class="row projects">
+              <div><strong>信创推进</strong></div>
+              <div><span class="pill pill-red">高风险</span></div>
+              <div>21</div>
+              <div>0</div>
+              <div>0</div>
+              <div>6</div>
+              <div>4</div>
+              <div>2026-05-10</div>
+              <div class="link">查看问题</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aside-stack">
+          <div class="aside-card">
+            <div class="section-head">
+              <div>
+                <h3>本周待办</h3>
+                <p>只放最该推动的事项，不把所有任务塞进首页。</p>
+              </div>
+            </div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">东吴测试包准备</div>
+                  <span class="pill pill-orange">周三到期</span>
+                </div>
+                <div class="list-meta">本地路由升级 · 东吴 · 负责人：张三</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">国金上线窗口确认</div>
+                  <span class="pill pill-blue">待确认</span>
+                </div>
+                <div class="list-meta">Linux 主站推进 · 国金 · 负责人：李四</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <div class="section-head">
+              <div>
+                <h3>高风险提醒</h3>
+                <p>第一页就能看到坏消息，不需要再往下钻。</p>
+              </div>
+            </div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">东吴灰度放开阻塞</div>
+                  <span class="pill pill-red">高风险</span>
+                </div>
+                <div class="list-meta">客户端放开第 8 步未完成，测试资源未确认。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">信创推进测试未排期</div>
+                  <span class="pill pill-red">延期</span>
+                </div>
+                <div class="list-meta">国金 · 超过 3 天未跟进，影响验收窗口。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <div class="section-head">
+              <div>
+                <h3>近期里程碑</h3>
+                <p>让首页既能看风险，也能看最近的推进成果。</p>
+              </div>
+            </div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">太平洋 APP 升级完成</div>
+                  <div class="link">5月12日</div>
+                </div>
+                <div class="list-meta">本地路由升级 · 已完成 14/14，进入灰度放开阶段。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">中天国富验收通过</div>
+                  <div class="link">5月10日</div>
+                </div>
+                <div class="list-meta">信创推进 · 券商确认完成，进入版本归档。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-broker" class="screen">
+      <div class="stats">
+        <div class="stat"><div class="stat-label">券商总数</div><div class="stat-value">24</div></div>
+        <div class="stat"><div class="stat-label">活跃券商</div><div class="stat-value">18</div></div>
+        <div class="stat"><div class="stat-label">高关注券商</div><div class="stat-value">6</div></div>
+        <div class="stat"><div class="stat-label">本周有升级安排</div><div class="stat-value">9</div></div>
+        <div class="stat"><div class="stat-label">待解决问题</div><div class="stat-value">17</div></div>
+      </div>
+
+      <div class="workspace">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h2>重点券商经营视图</h2>
+              <p>先看重点券商当前有多少项目、风险和本周动作，再进券商详情。</p>
+            </div>
+            <div class="link">查看全部券商</div>
+          </div>
+
+          <div class="cards">
+            <div class="mini-card">
+              <h4>东吴</h4>
+              <p>当前项目推进最密集，既有本地路由，也有后续灰度放开动作。</p>
+              <div class="grid-2">
+                <div class="metric"><span>进行中项目</span><strong>3</strong></div>
+                <div class="metric"><span>高风险</span><strong>2</strong></div>
+                <div class="metric"><span>本周待办</span><strong>5</strong></div>
+                <div class="metric"><span>最近更新</span><strong>今天</strong></div>
+              </div>
+              <div class="link">查看券商详情</div>
+            </div>
+
+            <div class="mini-card">
+              <h4>太平洋</h4>
+              <p>推进较快，重点是放开收尾和委托主站后续升级准备。</p>
+              <div class="grid-2">
+                <div class="metric"><span>进行中项目</span><strong>2</strong></div>
+                <div class="metric"><span>高风险</span><strong>1</strong></div>
+                <div class="metric"><span>本周待办</span><strong>3</strong></div>
+                <div class="metric"><span>最近更新</span><strong>昨天</strong></div>
+              </div>
+              <div class="link">查看券商详情</div>
+            </div>
+
+            <div class="mini-card">
+              <h4>国金</h4>
+              <p>项目较多但推进偏慢，更需要问题跟踪和排期推动。</p>
+              <div class="grid-2">
+                <div class="metric"><span>进行中项目</span><strong>4</strong></div>
+                <div class="metric"><span>高风险</span><strong>2</strong></div>
+                <div class="metric"><span>本周待办</span><strong>6</strong></div>
+                <div class="metric"><span>最近更新</span><strong>2天前</strong></div>
+              </div>
+              <div class="link">查看券商详情</div>
+            </div>
+          </div>
+
+          <div class="table">
+            <div class="row brokers header">
+              <div>券商名称</div>
+              <div>券商状态</div>
+              <div>项目数</div>
+              <div>进行中</div>
+              <div>高风险</div>
+              <div>本周待办</div>
+              <div>问题数</div>
+              <div>最近更新</div>
+              <div>操作</div>
+            </div>
+            <div class="row brokers">
+              <div><strong>东吴</strong></div>
+              <div><span class="pill pill-blue">活跃推进</span></div>
+              <div>3</div>
+              <div>3</div>
+              <div>2</div>
+              <div>5</div>
+              <div>4</div>
+              <div>今天</div>
+              <div class="link">查看券商</div>
+            </div>
+            <div class="row brokers">
+              <div><strong>太平洋</strong></div>
+              <div><span class="pill pill-green">稳定推进</span></div>
+              <div>2</div>
+              <div>2</div>
+              <div>1</div>
+              <div>3</div>
+              <div>2</div>
+              <div>昨天</div>
+              <div class="link">查看券商</div>
+            </div>
+            <div class="row brokers">
+              <div><strong>国金</strong></div>
+              <div><span class="pill pill-orange">重点跟进</span></div>
+              <div>4</div>
+              <div>4</div>
+              <div>2</div>
+              <div>6</div>
+              <div>5</div>
+              <div>2天前</div>
+              <div class="link">查看券商</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aside-stack">
+          <div class="aside-card">
+            <div class="section-head">
+              <div>
+                <h3>重点券商动作</h3>
+                <p>适合券商经营视角下，先看今天最该联系或推进的券商。</p>
+              </div>
+            </div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">联系东吴确认灰度安排</div>
+                  <span class="pill pill-orange">今天</span>
+                </div>
+                <div class="list-meta">本地路由升级 · 当前卡点是测试资源未确认。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">跟进国金测试窗口</div>
+                  <span class="pill pill-blue">待回复</span>
+                </div>
+                <div class="list-meta">Linux 主站推进 · 需要确认本周排期是否能落地。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <div class="section-head">
+              <div>
+                <h3>券商问题热区</h3>
+                <p>把同一券商下多个项目的问题集中看，避免漏项。</p>
+              </div>
+            </div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">东吴：主站切换后的兼容问题</div>
+                  <span class="pill pill-red">未关闭</span>
+                </div>
+                <div class="list-meta">涉及本地路由升级、后续版本升级两个项目。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">国金：测试资源排期冲突</div>
+                  <span class="pill pill-red">阻塞</span>
+                </div>
+                <div class="list-meta">影响 Linux 主站推进与信创推进的时间窗口。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <div class="section-head">
+              <div>
+                <h3>券商里程碑</h3>
+                <p>从券商视角回看最近完成的关键节点。</p>
+              </div>
+            </div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">太平洋：委托主站切换完成</div>
+                  <div class="link">5月12日</div>
+                </div>
+                <div class="list-meta">本地路由升级 · 当前进入放开收尾阶段。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top">
+                  <div class="list-title">中天国富：版本内容确认完成</div>
+                  <div class="link">5月11日</div>
+                </div>
+                <div class="list-meta">版本管理 · 已可进入下一轮计划安排。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showScreen(type) {
+    const screens = ['project', 'broker'];
+    screens.forEach(function(key) {
+      const screen = document.getElementById('screen-' + key);
+      if (screen) screen.classList.toggle('active', key === type);
+    });
+    document.querySelectorAll('.segmented button').forEach(function(btn, index) {
+      const key = index === 0 ? 'project' : 'broker';
+      btn.classList.toggle('active', key === type);
+    });
+  }
+</script>

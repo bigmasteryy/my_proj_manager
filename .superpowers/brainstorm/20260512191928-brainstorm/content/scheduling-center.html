@@ -1,0 +1,572 @@
+<style>
+  :root {
+    --bg: #eef3f8;
+    --panel: rgba(255, 255, 255, 0.92);
+    --border: #dbe5f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --orange: #ea580c;
+    --orange-soft: #ffedd5;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+    --slate-soft: #f8fafc;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+      linear-gradient(180deg, #f8fbff, var(--bg));
+  }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    border-radius: 24px;
+    padding: 20px 18px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .brand { margin-bottom: 18px; }
+  .brand h2 { margin: 0 0 6px; font-size: 24px; color: var(--text); }
+  .brand p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+  .nav-group { display: grid; gap: 8px; margin-bottom: 16px; }
+  .nav-title {
+    padding: 8px 10px 2px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .nav-item {
+    padding: 11px 12px;
+    border-radius: 14px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+  }
+  .nav-item.active {
+    color: #0f172a;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .content-shell { display: grid; gap: 18px; }
+
+  .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .hero-kicker {
+    margin-bottom: 10px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-copy h1 {
+    margin: 0 0 8px;
+    font-size: 34px;
+    color: var(--text);
+    line-height: 1.08;
+  }
+  .hero-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 760px;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .stat {
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  }
+  .stat-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .stat-value { color: var(--text); font-size: 30px; font-weight: 800; line-height: 1; }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.95fr);
+    gap: 18px;
+  }
+
+  .panel, .aside-card {
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+  .panel { padding: 22px; }
+  .aside-stack { display: grid; gap: 16px; }
+  .aside-card { padding: 20px; }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-head h2, .section-head h3 {
+    margin: 0;
+    color: var(--text);
+  }
+  .section-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter {
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .milestones {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .milestone {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #fff, #f8fbff);
+  }
+  .milestone span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .milestone strong {
+    display: block;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .milestone em {
+    display: block;
+    margin-top: 10px;
+    color: var(--blue);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .table {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .row {
+    display: grid;
+    align-items: center;
+  }
+  .row.schedule {
+    grid-template-columns: 1.45fr 1fr 0.85fr 0.9fr 0.85fr 0.9fr 0.9fr;
+  }
+  .row.header {
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+  }
+  .row:not(.header) {
+    border-top: 1px solid #edf2f7;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .row > div { padding: 13px 14px; }
+
+  .title {
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .pill-blue { background: var(--blue-soft); color: #1d4ed8; }
+  .pill-green { background: var(--green-soft); color: #166534; }
+  .pill-orange { background: var(--orange-soft); color: #c2410c; }
+  .pill-red { background: var(--red-soft); color: #b91c1c; }
+
+  .calendar {
+    display: grid;
+    gap: 10px;
+  }
+  .calendar-row {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--slate-soft);
+    border: 1px solid var(--border);
+  }
+  .calendar-day {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .calendar-list {
+    display: grid;
+    gap: 8px;
+  }
+  .calendar-item {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .list {
+    display: grid;
+    gap: 12px;
+  }
+  .list-item {
+    padding: 14px 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--slate-soft);
+  }
+  .list-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .list-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .list-meta {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .link {
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>项目管理平台</h2>
+      <p>这张页用来解决升级包准备、测试安排、上线窗口、延期标记和里程碑跟踪。</p>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">总览</div>
+      <div class="nav-item">项目总览</div>
+      <div class="nav-item">券商总览</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">推进</div>
+      <div class="nav-item">项目推进矩阵</div>
+      <div class="nav-item active">排期中心</div>
+      <div class="nav-item">问题中心</div>
+      <div class="nav-item">协作任务</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">基础资料</div>
+      <div class="nav-item">券商列表</div>
+      <div class="nav-item">服务器</div>
+      <div class="nav-item">委托主站</div>
+      <div class="nav-item">版本管理</div>
+    </div>
+  </aside>
+
+  <div class="content-shell">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="hero-kicker">排期中心 / 标准排期</div>
+        <h1>把升级包、测试、上线窗口和里程碑放进同一条时间线上</h1>
+        <p>
+          这张页不是复杂的日历系统，而是标准排期工作台：既能看项目和券商维度的关键节点，也能集中发现延期、
+          资源冲突和本周要落地的升级安排。
+        </p>
+      </div>
+      <div class="hero-actions">
+        <div class="chip">新增排期事项</div>
+        <div class="chip">生成本周计划</div>
+        <div class="chip">导出排期</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">排期事项总数</div><div class="stat-value">42</div></div>
+      <div class="stat"><div class="stat-label">本周安排</div><div class="stat-value">14</div></div>
+      <div class="stat"><div class="stat-label">已延期</div><div class="stat-value">5</div></div>
+      <div class="stat"><div class="stat-label">待确认窗口</div><div class="stat-value">7</div></div>
+      <div class="stat"><div class="stat-label">本周里程碑</div><div class="stat-value">4</div></div>
+    </div>
+
+    <div class="workspace">
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h2>关键里程碑视图</h2>
+            <p>上面先看本周和近期最重要的节点，下面的排期总表再负责真正推进。</p>
+          </div>
+          <div class="link">查看全部排期</div>
+        </div>
+
+        <div class="filters">
+          <div class="filter">项目：全部</div>
+          <div class="filter">券商：全部</div>
+          <div class="filter">时间：本周</div>
+          <div class="filter">状态：全部</div>
+          <div class="filter">负责人：全部</div>
+        </div>
+
+        <div class="milestones">
+          <div class="milestone">
+            <span>升级包准备</span>
+            <strong>东吴测试包周三前必须完成</strong>
+            <em>关联项目：本地路由升级</em>
+          </div>
+          <div class="milestone">
+            <span>测试安排</span>
+            <strong>国金 Linux 主站灰度验证周四执行</strong>
+            <em>关联项目：Linux 主站推进</em>
+          </div>
+          <div class="milestone">
+            <span>上线窗口</span>
+            <strong>太平洋放开窗口周五 20:00</strong>
+            <em>关联项目：本地路由升级</em>
+          </div>
+          <div class="milestone">
+            <span>里程碑</span>
+            <strong>中天国富信创验收本周归档</strong>
+            <em>关联项目：信创推进</em>
+          </div>
+        </div>
+
+        <div class="table">
+          <div class="row schedule header">
+            <div>排期事项</div>
+            <div>项目 / 券商</div>
+            <div>负责人</div>
+            <div>计划开始</div>
+            <div>计划结束</div>
+            <div>状态</div>
+            <div>操作</div>
+          </div>
+          <div class="row schedule">
+            <div>
+              <div class="title">准备东吴升级包并确认测试安排</div>
+              <div class="sub">类型：升级包准备 · 需要和测试资源确认一起推进</div>
+            </div>
+            <div>本地路由升级 / 东吴</div>
+            <div>张三</div>
+            <div>5月12日</div>
+            <div>5月13日</div>
+            <div><span class="pill pill-orange">进行中</span></div>
+            <div class="link">查看详情</div>
+          </div>
+          <div class="row schedule">
+            <div>
+              <div class="title">确认国金 Linux 主站灰度窗口</div>
+              <div class="sub">类型：上线安排 · 当前等待券商侧回复时间</div>
+            </div>
+            <div>Linux 主站推进 / 国金</div>
+            <div>李四</div>
+            <div>5月12日</div>
+            <div>5月14日</div>
+            <div><span class="pill pill-blue">待确认</span></div>
+            <div class="link">查看详情</div>
+          </div>
+          <div class="row schedule">
+            <div>
+              <div class="title">梳理太平洋放开后的运行分析</div>
+              <div class="sub">类型：放开复盘 · 需要补运行情况分析结论</div>
+            </div>
+            <div>本地路由升级 / 太平洋</div>
+            <div>王五</div>
+            <div>5月10日</div>
+            <div>5月12日</div>
+            <div><span class="pill pill-red">已延期</span></div>
+            <div class="link">查看详情</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="aside-stack">
+        <div class="aside-card">
+          <div class="section-head">
+            <div>
+              <h3>本周时间轴</h3>
+              <p>帮助快速感知本周排期是否拥挤，以及关键窗口是否冲突。</p>
+            </div>
+          </div>
+
+          <div class="calendar">
+            <div class="calendar-row">
+              <div class="calendar-day">周二</div>
+              <div class="calendar-list">
+                <div class="calendar-item">东吴升级包准备启动</div>
+                <div class="calendar-item">国金上线窗口确认催办</div>
+              </div>
+            </div>
+            <div class="calendar-row">
+              <div class="calendar-day">周三</div>
+              <div class="calendar-list">
+                <div class="calendar-item">东吴测试资源确认</div>
+                <div class="calendar-item">信创兼容验证会议</div>
+              </div>
+            </div>
+            <div class="calendar-row">
+              <div class="calendar-day">周四</div>
+              <div class="calendar-list">
+                <div class="calendar-item">国金 Linux 主站灰度验证</div>
+              </div>
+            </div>
+            <div class="calendar-row">
+              <div class="calendar-day">周五</div>
+              <div class="calendar-list">
+                <div class="calendar-item">太平洋放开窗口执行</div>
+                <div class="calendar-item">中天国富验收归档</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aside-card">
+          <div class="section-head">
+            <div>
+              <h3>延期与冲突</h3>
+              <p>先暴露排期问题，再决定是否要调整任务或资源。</p>
+            </div>
+          </div>
+
+          <div class="list">
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">太平洋运行分析逾期</div>
+                <span class="pill pill-red">已延期</span>
+              </div>
+              <div class="list-meta">本地路由升级 · 已超过截止时间 1 天，影响后续收尾动作。</div>
+            </div>
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">国金测试资源与信创验证冲突</div>
+                <span class="pill pill-red">冲突</span>
+              </div>
+              <div class="list-meta">同一时间段需要共享测试资源，建议提前调整窗口。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aside-card">
+          <div class="section-head">
+            <div>
+              <h3>近期里程碑</h3>
+              <p>这块帮助你快速汇总周报和对外同步内容。</p>
+            </div>
+          </div>
+
+          <div class="list">
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">太平洋 APP 升级完成</div>
+                <div class="link">5月12日</div>
+              </div>
+              <div class="list-meta">本地路由升级 · 已进入放开阶段。</div>
+            </div>
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">中天国富验收通过</div>
+                <div class="link">5月10日</div>
+              </div>
+              <div class="list-meta">信创推进 · 已完成本轮验收，可进入归档。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>排期中心</title>
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --panel: rgba(255,255,255,0.94);
+      --border: #dbe5f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --blue-soft: #dbeafe;
+      --green-soft: #dcfce7;
+      --red-soft: #fee2e2;
+      --orange-soft: #ffedd5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top left, rgba(37,99,235,0.08), transparent 28%), linear-gradient(180deg, #f8fbff, var(--bg));
+      color: var(--text);
+    }
+    .page { padding: 18px; display: grid; gap: 16px; }
+    .hero, .panel, .stat {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow: 0 12px 28px rgba(15,23,42,0.05);
+      border-radius: 20px;
+    }
+    .hero { padding: 20px 22px; }
+    .hero h1 { margin: 0 0 8px; font-size: 28px; }
+    .hero p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .stat { padding: 14px 16px; display: grid; gap: 8px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .stat strong { font-size: 28px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); gap: 16px; }
+    .panel { padding: 18px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .section-head h2, .section-head h3 { margin: 0; }
+    .section-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .table { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .table .head, .table .row { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr; }
+    .table .head { background: #f8fbff; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .table .head div, .table .row div { padding: 12px 14px; border-bottom: 1px solid rgba(219,229,240,0.72); }
+    .table .row:last-child div { border-bottom: none; }
+    .pill { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .pill.blue { background: var(--blue-soft); color: #1d4ed8; }
+    .pill.green { background: var(--green-soft); color: #166534; }
+    .pill.red { background: var(--red-soft); color: #b91c1c; }
+    .pill.orange { background: var(--orange-soft); color: #9a3412; }
+    .timeline { display: grid; gap: 12px; }
+    .mile {
+      border-left: 3px solid #93c5fd;
+      padding-left: 12px;
+      display: grid;
+      gap: 4px;
+    }
+    .mile h4 { margin: 0; font-size: 14px; }
+    .mile p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>排期中心</h1>
+      <p>统一管理升级包准备、测试安排、上线窗口、里程碑和延期冲突，保证项目推进节奏可视化。</p>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><span>本周排期事项</span><strong>18</strong></div>
+      <div class="stat"><span>测试安排</span><strong>7</strong></div>
+      <div class="stat"><span>上线窗口</span><strong>4</strong></div>
+      <div class="stat"><span>延期冲突</span><strong>3</strong></div>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h2>核心排期表</h2>
+            <p>以事件为单位管理准备、测试、上线和验收。</p>
+          </div>
+        </div>
+        <div class="table">
+          <div class="head">
+            <div>事项</div><div>所属项目</div><div>所属券商</div><div>计划日期</div><div>状态</div>
+          </div>
+          <div class="row">
+            <div>东吴测试包准备</div><div>本地路由升级</div><div>东吴</div><div>05-14</div><div><span class="pill blue">进行中</span></div>
+          </div>
+          <div class="row">
+            <div>国金上线窗口确认</div><div>Linux 主站推进</div><div>国金</div><div>05-16</div><div><span class="pill orange">待确认</span></div>
+          </div>
+          <div class="row">
+            <div>太平洋验收计划补齐</div><div>信创推进</div><div>太平洋</div><div>05-13</div><div><span class="pill red">已延期</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h3>里程碑与冲突</h3>
+            <p>右侧专门盯关键节点和冲突提醒。</p>
+          </div>
+        </div>
+        <div class="timeline">
+          <div class="mile">
+            <h4>05-14 东吴测试开始</h4>
+            <p>本地路由升级，测试资源已锁定，待测试包最终确认。</p>
+          </div>
+          <div class="mile">
+            <h4>05-16 国金上线窗口确认</h4>
+            <p>Linux 主站推进，依赖运维与客户共同确认。</p>
+          </div>
+          <div class="mile">
+            <h4>冲突提醒：太平洋验收计划延后</h4>
+            <p>信创推进与测试档期冲突，建议优先补齐计划并重新排期。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     debug: bool = True
     allowed_origins: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
     database_url: str = f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}"
+    ai_api_key: str = ""
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_model: str = "gpt-4o-mini"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

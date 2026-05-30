@@ -177,7 +177,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { getBrokers } from "../../api/brokers";
 import { createProject, getProjects } from "../../api/projects";
 import type { BrokerSummary, DashboardProject, ProjectCreatePayload } from "../../types/models";
@@ -185,6 +185,7 @@ import EmptyBlock from "../../components/EmptyBlock.vue";
 import StatusTag from "../../components/StatusTag.vue";
 
 const router = useRouter();
+const route = useRoute();
 const brokers = ref<BrokerSummary[]>([]);
 const projects = ref<DashboardProject[]>([]);
 const projectDialogVisible = ref(false);
@@ -335,6 +336,10 @@ async function handleCreateProject() {
 
 onMounted(async () => {
   brokers.value = await getBrokers();
+  const queryBrokerId = Number(route.query.broker_id || 0);
+  if (queryBrokerId) {
+    filters.broker_id = queryBrokerId;
+  }
   resetProjectForm();
   await loadProjects();
 });
@@ -345,6 +350,15 @@ watch(projectDialogVisible, (visible) => {
     resetProjectForm();
   }
 });
+
+watch(
+  () => route.query.broker_id,
+  async (value) => {
+    const brokerId = Number(value || 0);
+    filters.broker_id = brokerId || undefined;
+    await loadProjects();
+  }
+);
 
 function downloadProjectCsv() {
   const header = ["券商", "项目", "类型", "负责人", "关键日期", "进度", "风险数", "逾期数", "状态"];

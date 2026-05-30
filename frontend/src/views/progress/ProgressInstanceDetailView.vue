@@ -125,14 +125,87 @@
                 </template>
               </el-table-column>
               <el-table-column label="操作" min-width="170" fixed="right">
-                <template #default="{ row }">
+                <template #default="{ row, $index }">
                   <el-button link type="primary" @click="openStage2StepDialog(row)">编辑</el-button>
                   <el-button link type="danger" @click="handleDeleteStage2Step(row)">删除</el-button>
-                  <el-button link @click="handleMoveStage2Step(row, 'up')">↑</el-button>
-                  <el-button link @click="handleMoveStage2Step(row, 'down')">↓</el-button>
+                  <el-button link :disabled="$index === 0" @click="handleMoveStage2Step(row, 'up')">
+                    <el-icon><ArrowUpBold /></el-icon>
+                  </el-button>
+                  <el-button link :disabled="$index === stage2Steps.length - 1" @click="handleMoveStage2Step(row, 'down')">
+                    <el-icon><ArrowDownBold /></el-icon>
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
+          </el-tab-pane>
+
+          <el-tab-pane :label="`任务清单 (${detail.tasks.length})`" name="tasks">
+            <div class="section-title">
+              <div>
+                <h3>任务清单</h3>
+                <p>把当前券商项目拆成具体事项，明确负责人和计划完成时间。</p>
+              </div>
+              <el-button type="primary" @click="openTaskDialog()">新增任务</el-button>
+            </div>
+            <section class="compact-grid compact-grid-4" style="margin-bottom: 16px;">
+              <article class="compact-card">
+                <small>总任务</small>
+                <strong>{{ taskStats.total }}</strong>
+              </article>
+              <article class="compact-card">
+                <small>进行中</small>
+                <strong>{{ taskStats.active }}</strong>
+              </article>
+              <article class="compact-card">
+                <small>已逾期</small>
+                <strong>{{ taskStats.overdue }}</strong>
+              </article>
+              <article class="compact-card">
+                <small>已完成</small>
+                <strong>{{ taskStats.completed }}</strong>
+              </article>
+            </section>
+            <el-table v-if="detail.tasks.length" :data="detail.tasks" stripe max-height="520">
+              <el-table-column prop="title" label="任务" min-width="220" sortable>
+                <template #default="{ row }">
+                  <div class="table-multiline">
+                    <strong>{{ row.title }}</strong>
+                    <small v-if="row.description" class="compact-note">{{ row.description }}</small>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="ownerName" label="负责人" min-width="100" sortable />
+              <el-table-column prop="plannedFinishDate" label="计划完成" min-width="110" sortable />
+              <el-table-column prop="priority" label="优先级" min-width="90" sortable>
+                <template #default="{ row }">
+                  <StatusTag :label="row.priority" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" min-width="100" sortable>
+                <template #default="{ row }">
+                  <StatusTag :label="row.status" />
+                </template>
+              </el-table-column>
+              <el-table-column label="关联项" min-width="180">
+                <template #default="{ row }">
+                  <div class="table-multiline">{{ row.itemLabel || row.stage2StepName || "-" }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" min-width="210" fixed="right">
+                <template #default="{ row }">
+                  <el-button link type="primary" @click="openTaskDialog(row)">编辑</el-button>
+                  <el-button link :disabled="row.status === '已完成'" @click="handleCompleteTask(row)">完成</el-button>
+                  <el-button link :disabled="row.status === '阻塞' || row.status === '已完成'" @click="handleBlockTask(row)">阻塞</el-button>
+                  <el-button link type="danger" @click="handleDeleteTask(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <EmptyBlock
+              v-else
+              compact
+              title="当前没有任务"
+              description="新增任务后，可以在这里跟踪人、事和时间。"
+            />
           </el-tab-pane>
 
           <el-tab-pane :label="`推进记录 (${detail.logs.length})`" name="logs">
@@ -309,6 +382,65 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="taskDialogVisible" :title="editingTask ? '编辑任务' : '新增任务'" width="720px">
+      <el-form :model="taskForm" label-width="110px">
+        <el-form-item label="任务标题" required>
+          <el-input v-model="taskForm.title" placeholder="例如：确认测试环境接口连通性" />
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-input v-model="taskForm.owner_name" placeholder="填写同事姓名" />
+        </el-form-item>
+        <el-form-item label="协同人">
+          <el-input v-model="taskForm.collaborator_names" placeholder="可选，多人用逗号分隔" />
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-select v-model="taskForm.priority" style="width: 100%;">
+            <el-option label="高" value="高" />
+            <el-option label="中" value="中" />
+            <el-option label="低" value="低" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="当前状态">
+          <el-select v-model="taskForm.status" style="width: 100%;">
+            <el-option label="未开始" value="未开始" />
+            <el-option label="进行中" value="进行中" />
+            <el-option label="阻塞" value="阻塞" />
+            <el-option label="已完成" value="已完成" />
+            <el-option label="已取消" value="已取消" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="计划开始">
+          <el-date-picker v-model="taskForm.planned_start_date" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="计划完成">
+          <el-date-picker v-model="taskForm.planned_finish_date" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="关联进度项">
+          <el-select v-model="taskForm.item_template_id" clearable style="width: 100%;">
+            <el-option v-for="item in detail?.progressItems || []" :key="item.itemTemplateId" :label="item.itemLabel" :value="item.itemTemplateId" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关联步骤" v-if="stage2Steps.length">
+          <el-select v-model="taskForm.stage2_step_instance_id" clearable style="width: 100%;">
+            <el-option v-for="item in stage2Steps" :key="item.stepInstanceId" :label="`${item.stepNoDisplay} ${item.stepName}`" :value="item.stepInstanceId" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="任务说明">
+          <el-input v-model="taskForm.description" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="完成结果">
+          <el-input v-model="taskForm.completion_result" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="taskForm.remark" type="textarea" :rows="3" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="taskDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="taskSubmitting" @click="handleSaveTask">保存</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="logDialogVisible" :title="editingLog ? '编辑推进记录' : '新增推进记录'" width="620px">
       <el-form :model="logForm" label-width="110px">
         <el-form-item label="关联进度项">
@@ -424,24 +556,30 @@
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons-vue";
 
 import EmptyBlock from "../../components/EmptyBlock.vue";
 import ProgressValueDisplay from "../../components/ProgressValueDisplay.vue";
 import StatusTag from "../../components/StatusTag.vue";
 import {
+  blockProgressTask,
+  completeProgressTask,
   createProgressLog,
   createProgressProjectItem,
   createProgressRisk,
   createProgressStage2Step,
+  createProgressTask,
   deleteProgressProjectItem,
   deleteProgressStage2Step,
+  deleteProgressTask,
   getProgressInstanceDetail,
   moveProgressStage2Step,
   updateProgressItemValue,
   updateProgressLog,
   updateProgressProjectItem,
   updateProgressRisk,
-  updateProgressStage2Step
+  updateProgressStage2Step,
+  updateProgressTask
 } from "../../api/progress";
 import type {
   ProgressInstanceDetail,
@@ -453,6 +591,8 @@ import type {
   ProgressStage2StepCreatePayload,
   ProgressStage2StepItem,
   ProgressStage2StepUpdatePayload,
+  ProgressTaskItem,
+  ProgressTaskUpdatePayload,
   ProgressValueUpdatePayload
 } from "../../types/models";
 
@@ -467,15 +607,18 @@ const itemTemplateDialogVisible = ref(false);
 const logDialogVisible = ref(false);
 const riskDialogVisible = ref(false);
 const stage2StepDialogVisible = ref(false);
+const taskDialogVisible = ref(false);
 
 const editingItem = ref<ProgressItemDetail | null>(null);
 const editingItemTemplate = ref<ProgressItemDetail | null>(null);
 const editingLog = ref<ProgressLogItem | null>(null);
 const editingRisk = ref<ProgressRiskItem | null>(null);
 const editingStage2Step = ref<ProgressStage2StepItem | null>(null);
+const editingTask = ref<ProgressTaskItem | null>(null);
 
 const itemTemplateSubmitting = ref(false);
 const stage2StepSubmitting = ref(false);
+const taskSubmitting = ref(false);
 
 const valueForm = reactive<ProgressValueUpdatePayload>({
   status_value: "",
@@ -521,6 +664,22 @@ const riskForm = reactive<ProgressRiskUpdatePayload>({
   remark: ""
 });
 
+const taskForm = reactive<ProgressTaskUpdatePayload>({
+  item_template_id: null,
+  stage2_step_instance_id: null,
+  title: "",
+  description: "",
+  owner_name: "",
+  collaborator_names: "",
+  priority: "中",
+  status: "未开始",
+  planned_start_date: "",
+  planned_finish_date: "",
+  actual_finish_date: "",
+  completion_result: "",
+  remark: ""
+});
+
 const stage2StepForm = reactive<ProgressStage2StepCreatePayload & ProgressStage2StepUpdatePayload>({
   step_no_display: "",
   step_name: "",
@@ -534,6 +693,16 @@ const stage2StepForm = reactive<ProgressStage2StepCreatePayload & ProgressStage2
 
 const instanceId = computed(() => Number(route.params.id || 0));
 const stage2Steps = computed(() => detail.value?.stage2Groups.flatMap((group) => group.steps) || []);
+const taskStats = computed(() => {
+  const tasks = detail.value?.tasks || [];
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    total: tasks.length,
+    active: tasks.filter((item) => ["未开始", "进行中", "阻塞"].includes(item.status)).length,
+    overdue: tasks.filter((item) => item.plannedFinishDate && item.plannedFinishDate < today && item.status !== "已完成").length,
+    completed: tasks.filter((item) => item.status === "已完成").length
+  };
+});
 
 async function loadDetail() {
   if (!instanceId.value) {
@@ -542,7 +711,12 @@ async function loadDetail() {
   }
   detailLoading.value = true;
   try {
-    detail.value = await getProgressInstanceDetail(instanceId.value);
+    const result = await getProgressInstanceDetail(instanceId.value);
+    result.tasks = result.tasks || [];
+    detail.value = result;
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.detail || "加载项目详情失败");
+    detail.value = null;
   } finally {
     detailLoading.value = false;
   }
@@ -752,6 +926,106 @@ async function handleSaveRisk() {
     ElMessage.success("风险已新增");
   }
   riskDialogVisible.value = false;
+  await loadDetail();
+}
+
+function resetTaskForm() {
+  taskForm.item_template_id = null;
+  taskForm.stage2_step_instance_id = null;
+  taskForm.title = "";
+  taskForm.description = "";
+  taskForm.owner_name = "";
+  taskForm.collaborator_names = "";
+  taskForm.priority = "中";
+  taskForm.status = "未开始";
+  taskForm.planned_start_date = "";
+  taskForm.planned_finish_date = "";
+  taskForm.actual_finish_date = "";
+  taskForm.completion_result = "";
+  taskForm.remark = "";
+}
+
+function openTaskDialog(task?: ProgressTaskItem) {
+  editingTask.value = task || null;
+  resetTaskForm();
+  if (task) {
+    taskForm.item_template_id = task.itemTemplateId ?? null;
+    taskForm.stage2_step_instance_id = task.stage2StepInstanceId ?? null;
+    taskForm.title = task.title;
+    taskForm.description = task.description;
+    taskForm.owner_name = task.ownerName;
+    taskForm.collaborator_names = task.collaboratorNames;
+    taskForm.priority = task.priority;
+    taskForm.status = task.status;
+    taskForm.planned_start_date = task.plannedStartDate;
+    taskForm.planned_finish_date = task.plannedFinishDate;
+    taskForm.actual_finish_date = task.actualFinishDate;
+    taskForm.completion_result = task.completionResult;
+    taskForm.remark = task.remark;
+  }
+  taskDialogVisible.value = true;
+}
+
+function buildTaskPayload() {
+  return {
+    item_template_id: taskForm.item_template_id || null,
+    stage2_step_instance_id: taskForm.stage2_step_instance_id || null,
+    title: taskForm.title.trim(),
+    description: taskForm.description?.trim() || null,
+    owner_name: taskForm.owner_name?.trim() || null,
+    collaborator_names: taskForm.collaborator_names?.trim() || null,
+    priority: taskForm.priority,
+    status: taskForm.status,
+    planned_start_date: taskForm.planned_start_date || null,
+    planned_finish_date: taskForm.planned_finish_date || null,
+    actual_finish_date: taskForm.actual_finish_date || null,
+    completion_result: taskForm.completion_result?.trim() || null,
+    remark: taskForm.remark?.trim() || null
+  };
+}
+
+async function handleSaveTask() {
+  if (!taskForm.title.trim()) {
+    ElMessage.warning("请先填写任务标题");
+    return;
+  }
+  taskSubmitting.value = true;
+  try {
+    const payload = buildTaskPayload();
+    if (editingTask.value) {
+      await updateProgressTask(editingTask.value.id, payload);
+      ElMessage.success("任务已更新");
+    } else {
+      await createProgressTask(instanceId.value, payload);
+      ElMessage.success("任务已新增");
+    }
+    taskDialogVisible.value = false;
+    await loadDetail();
+  } finally {
+    taskSubmitting.value = false;
+  }
+}
+
+async function handleCompleteTask(task: ProgressTaskItem) {
+  await completeProgressTask(task.id, { completion_result: task.completionResult || "任务已完成" });
+  ElMessage.success("任务已完成，并已写入推进记录");
+  await loadDetail();
+}
+
+async function handleBlockTask(task: ProgressTaskItem) {
+  await blockProgressTask(task.id, { remark: task.remark || "任务被标记为阻塞" });
+  ElMessage.success("任务已标记阻塞，并已写入推进记录");
+  await loadDetail();
+}
+
+async function handleDeleteTask(task: ProgressTaskItem) {
+  await ElMessageBox.confirm(`确认删除任务“${task.title}”吗？`, "删除确认", {
+    type: "warning",
+    confirmButtonText: "确认删除",
+    cancelButtonText: "取消"
+  });
+  await deleteProgressTask(task.id);
+  ElMessage.success("任务已删除");
   await loadDetail();
 }
 

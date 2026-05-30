@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>问题中心</title>
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --panel: rgba(255,255,255,0.94);
+      --border: #dbe5f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --green-soft: #dcfce7;
+      --red-soft: #fee2e2;
+      --orange-soft: #ffedd5;
+      --blue-soft: #dbeafe;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top left, rgba(37,99,235,0.08), transparent 28%), linear-gradient(180deg, #f8fbff, var(--bg));
+      color: var(--text);
+    }
+    .page { padding: 18px; display: grid; gap: 16px; }
+    .hero, .panel, .stat {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow: 0 12px 28px rgba(15,23,42,0.05);
+      border-radius: 20px;
+    }
+    .hero { padding: 20px 22px; }
+    .hero h1 { margin: 0 0 8px; font-size: 28px; }
+    .hero p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .stat { padding: 14px 16px; display: grid; gap: 8px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .stat strong { font-size: 28px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); gap: 16px; }
+    .panel { padding: 18px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .section-head h2, .section-head h3 { margin: 0; }
+    .section-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .table { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .table .head, .table .row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; }
+    .table .head { background: #f8fbff; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .table .head div, .table .row div { padding: 12px 14px; border-bottom: 1px solid rgba(219,229,240,0.72); }
+    .table .row:last-child div { border-bottom: none; }
+    .pill { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .pill.red { background: var(--red-soft); color: #b91c1c; }
+    .pill.orange { background: var(--orange-soft); color: #9a3412; }
+    .pill.green { background: var(--green-soft); color: #166534; }
+    .pill.blue { background: var(--blue-soft); color: #1d4ed8; }
+    .issue { padding: 12px 0; border-bottom: 1px solid rgba(219,229,240,0.7); }
+    .issue:last-child { border-bottom: none; }
+    .issue h4 { margin: 0 0 6px; font-size: 14px; }
+    .issue p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>问题中心</h1>
+      <p>统一管理共享问题、个性化问题、阻塞项和关闭结果，避免问题散落在备注和聊天记录里。</p>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><span>总问题数</span><strong>34</strong></div>
+      <div class="stat"><span>高风险问题</span><strong>6</strong></div>
+      <div class="stat"><span>阻塞问题</span><strong>4</strong></div>
+      <div class="stat"><span>本周已关闭</span><strong>9</strong></div>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h2>问题总表</h2>
+            <p>先看项目、券商、严重级别、责任人，再进入详情闭环。</p>
+          </div>
+        </div>
+        <div class="table">
+          <div class="head">
+            <div>问题标题</div><div>所属项目</div><div>所属券商</div><div>级别</div><div>状态</div>
+          </div>
+          <div class="row">
+            <div>东吴灰度放开卡在测试资源确认</div><div>本地路由升级</div><div>东吴</div><div><span class="pill red">高</span></div><div><span class="pill orange">阻塞</span></div>
+          </div>
+          <div class="row">
+            <div>国金测试排期未锁定</div><div>信创推进</div><div>国金</div><div><span class="pill orange">中</span></div><div><span class="pill blue">跟进中</span></div>
+          </div>
+          <div class="row">
+            <div>太平洋验收材料已补齐</div><div>Linux 主站推进</div><div>太平洋</div><div><span class="pill green">低</span></div><div><span class="pill green">已关闭</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h3>高风险 / 关闭结果</h3>
+            <p>右侧聚焦最该被看见的问题和最近闭环成果。</p>
+          </div>
+        </div>
+        <div class="issue">
+          <h4>东吴灰度放开阻塞</h4>
+          <p>当前卡点：测试资源和开关确认未同时就绪，影响本周灰度窗口。</p>
+        </div>
+        <div class="issue">
+          <h4>国金测试排期未锁定</h4>
+          <p>已连续 3 天未跟进，建议升级为重点跟踪问题。</p>
+        </div>
+        <div class="issue">
+          <h4>关闭结果：太平洋验收材料补齐</h4>
+          <p>问题已关闭，后续进入验收排期阶段，无需继续挂起。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

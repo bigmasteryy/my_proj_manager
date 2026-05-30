@@ -6,7 +6,10 @@ import type {
   ProgressInstanceDetail,
   ProgressLogCreatePayload,
   ProgressLogItem,
+  ProgressMatrixAiAnalysis,
   ProgressMatrixResponse,
+  ProgressFeaturedProjectsUpdatePayload,
+  ProgressProjectOverview,
   ProgressProjectBrokerAddPayload,
   ProgressProjectCreatePayload,
   ProgressProjectSummary,
@@ -16,6 +19,9 @@ import type {
   ProgressStage2StepCreatePayload,
   ProgressStage2StepMovePayload,
   ProgressStage2StepUpdatePayload,
+  ProgressTaskCreatePayload,
+  ProgressTaskStatusPayload,
+  ProgressTaskUpdatePayload,
   ProgressValueUpdatePayload,
   WeeklyReport
 } from "../types/models";
@@ -24,12 +30,24 @@ export function getProgressProjects() {
   return unwrap<ProgressProjectSummary[]>(http.get("/progress/projects"));
 }
 
+export function getProgressProjectOverview() {
+  return unwrap<ProgressProjectOverview>(http.get("/progress/overview/projects"));
+}
+
+export function updateProgressFeaturedProjects(payload: ProgressFeaturedProjectsUpdatePayload) {
+  return unwrap<{ projectTemplateIds: number[] }>(http.post("/progress/overview/projects/featured", payload));
+}
+
 export function createProgressProject(payload: ProgressProjectCreatePayload) {
   return unwrap<{ projectTemplateId: number; projectCode: string; projectName: string }>(http.post("/progress/projects", payload));
 }
 
 export function getProgressMatrix(projectTemplateId: number) {
   return unwrap<ProgressMatrixResponse>(http.get(`/progress/projects/${projectTemplateId}/matrix`));
+}
+
+export function analyzeProgressMatrix(projectTemplateId: number) {
+  return unwrap<ProgressMatrixAiAnalysis>(http.post(`/progress/projects/${projectTemplateId}/ai-analysis`));
 }
 
 export function getProgressBrokers() {
@@ -100,6 +118,26 @@ export function createProgressRisk(instanceId: number, payload: ProgressRiskCrea
 
 export function updateProgressRisk(riskId: number, payload: ProgressRiskUpdatePayload) {
   return unwrap(http.put(`/progress/risks/${riskId}`, payload));
+}
+
+export function createProgressTask(instanceId: number, payload: ProgressTaskCreatePayload) {
+  return unwrap<{ id: number }>(http.post(`/progress/instances/${instanceId}/tasks`, payload));
+}
+
+export function updateProgressTask(taskId: number, payload: ProgressTaskUpdatePayload) {
+  return unwrap<{ id: number }>(http.put(`/progress/tasks/${taskId}`, payload));
+}
+
+export function completeProgressTask(taskId: number, payload: ProgressTaskStatusPayload) {
+  return unwrap<{ id: number }>(http.post(`/progress/tasks/${taskId}/complete`, payload));
+}
+
+export function blockProgressTask(taskId: number, payload: ProgressTaskStatusPayload) {
+  return unwrap<{ id: number }>(http.post(`/progress/tasks/${taskId}/block`, payload));
+}
+
+export function deleteProgressTask(taskId: number) {
+  return unwrap<{ deleted: boolean }>(http.delete(`/progress/tasks/${taskId}`));
 }
 
 export function updateProgressStage2Step(instanceId: number, stepInstanceId: number, payload: ProgressStage2StepUpdatePayload) {

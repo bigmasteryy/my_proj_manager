@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.db.models import (
     Broker,
+    BrokerEntrustSite,
+    BrokerIssue,
+    BrokerIssueStatus,
+    BrokerServer,
     PersonalTask,
     Project,
     ProjectLog,
@@ -40,7 +44,191 @@ def seed_database(session: Session) -> None:
         seed_template_blueprints(session)
 
     ensure_progress_seed(session)
+    ensure_broker_management_seed(session)
+    ensure_broker_issues_seed(session)
     ensure_personal_tasks(session)
+
+
+BROKER_VERSION_SEED = {
+    "国新": "v4.0.6-sp1-bugfix009",
+    "德邦": "v4.0.6-sp8-bugfix004",
+    "前海": "v4.0.6-sp9-bugfix003-001",
+    "天风": "v4.0.6-sp9-bugfix004-fix001",
+    "华福": "v4.0.10.3-bugfix004",
+    "中天国富": "v4.0.10.4-bugfix002",
+    "财信": "v4.0.10.5",
+    "太平洋": "v4.0.10.6-bugfix007",
+    "粤开": "v4.0.10.6-bugfix002",
+    "江海": "v4.0.10.6-bugfix002",
+    "金融街": "v4.0.10.6-bugfix003-fix001",
+    "国金": "v4.0.10.6-bugfix004",
+    "东吴": "v4.0.10.6-bugfix004-001",
+    "中金": "v4.0.10.6-bugfix005",
+    "渤海": "v4.0.10.6-bugfix006",
+    "兴业": "v5.0.2.2-202509-bugfix001",
+    "中信建投": "v5.0.2.2",
+    "东莞": "v5.0.0.0-bugfix002",
+    "国融": "v5.0.2.2",
+    "国元": "v5.0.2.2-202509-bugfix002",
+}
+
+
+def ensure_broker_management_seed(session: Session) -> None:
+    brokers = session.query(Broker).all()
+    now = datetime.now()
+    business_status_cycle = ["已上线", "已上线", "待上线", "待对接", "待下线"]
+    legacy_status_map = {
+        "灰度中": "待上线",
+        "规划中": "待对接",
+        "暂停中": "待下线",
+        "对接中": "已上线",
+    }
+    has_featured_broker = any(item.is_featured for item in brokers)
+    for index, broker in enumerate(brokers, start=1):
+        if index <= 6 and not has_featured_broker:
+            broker.is_featured = True
+        if not broker.business_status:
+            broker.business_status = business_status_cycle[(index - 1) % len(business_status_cycle)]
+        elif broker.business_status in legacy_status_map:
+            broker.business_status = legacy_status_map[broker.business_status]
+        seeded_version = BROKER_VERSION_SEED.get(broker.name) or BROKER_VERSION_SEED.get(broker.short_name)
+        if seeded_version:
+            broker.system_version = seeded_version
+        elif not broker.system_version:
+            broker.system_version = f"V6.3.{index:02d}"
+        if broker.system_version_updated_at is None:
+            broker.system_version_updated_at = now
+        if not broker.system_version_content:
+            broker.system_version_content = "包含基础交易能力、稳定性修复和券商定制配置。"
+
+        if not broker.servers:
+            session.add_all(
+                [
+                    BrokerServer(
+                        broker_id=broker.id,
+                        name=f"{broker.short_name}-APP-01",
+                        cpu="8C",
+                        memory="32GB",
+                        operating_system="Linux",
+                        ip_address=f"10.10.{index}.11",
+                        remark="应用服务器",
+                        created_at=now,
+                        updated_at=now,
+                    ),
+                    BrokerServer(
+                        broker_id=broker.id,
+                        name=f"{broker.short_name}-DB-01",
+                        cpu="16C",
+                        memory="64GB",
+                        operating_system="Linux",
+                        ip_address=f"10.10.{index}.21",
+                        remark="数据库服务器",
+                        created_at=now,
+                        updated_at=now,
+                    ),
+                ]
+            )
+
+        if not broker.entrust_sites:
+            session.add_all(
+                [
+                    BrokerEntrustSite(
+                        broker_id=broker.id,
+                        name=f"{broker.short_name}-PC主站",
+                        client_type="PC",
+                        software_version=f"PC-{index}.0",
+                        updated_at=now,
+                        operating_system="Windows",
+                        is_xinchuang=False,
+                        remark="桌面端委托主站",
+                        created_at=now,
+                    ),
+                    BrokerEntrustSite(
+                        broker_id=broker.id,
+                        name=f"{broker.short_name}-APP主站",
+                        client_type="APP",
+                        software_version=f"APP-{index}.0",
+                        updated_at=now,
+                        operating_system="Linux",
+                        is_xinchuang=(index % 2 == 0),
+                        remark="移动端委托主站",
+                        created_at=now,
+                    ),
+                ]
+            )
+
+    session.flush()
+
+
+def ensure_broker_issues_seed(session: Session) -> None:
+    if session.query(BrokerIssue).first() is not None:
+        return
+
+    brokers = session.query(Broker).order_by(Broker.id.asc()).limit(5).all()
+    if not brokers:
+        return
+
+    now = datetime.now()
+    issue_specs = [
+        {
+            "issue_type": "线上问题",
+            "title": "本地路由签约后委托主站请求偶发回退",
+            "priority": "高",
+            "status": "开发中",
+            "description": "部分券商在本地路由签约后，委托主站请求仍偶发走主站路由，需要补充灰度配置和认证侧校验。",
+            "impact_scope": "影响已开启本地路由灰度的 APP 与 PC 签约用户。",
+            "planned_fix_version": "V6.3.28",
+            "solution": "认证侧增加路由模式校验，订单系统补充开关状态回传，并在灰度发布后复核 auth 请求来源。",
+            "owner_name": "戴洪添",
+            "broker_count": 3,
+        },
+        {
+            "issue_type": "新需求",
+            "title": "券商服务器与委托主站资产信息联动展示",
+            "priority": "中",
+            "status": "方案确认",
+            "description": "券商侧希望在版本检查时同步看到服务器、委托主站版本、是否信创等基础资产信息。",
+            "impact_scope": "影响需要做 Linux 主站推进和信创推进的券商。",
+            "planned_fix_version": "V6.4.00",
+            "solution": "在券商管理中维护服务器与委托主站明细，并在券商总览、版本管理页联动展示。",
+            "owner_name": "蒋张飞",
+            "broker_count": 2,
+        },
+    ]
+
+    for spec in issue_specs:
+        issue = BrokerIssue(
+            issue_type=spec["issue_type"],
+            title=spec["title"],
+            priority=spec["priority"],
+            status=spec["status"],
+            description=spec["description"],
+            impact_scope=spec["impact_scope"],
+            planned_fix_version=spec["planned_fix_version"],
+            solution=spec["solution"],
+            owner_name=spec["owner_name"],
+            planned_finish_date=None,
+            remark="演示数据，可按实际情况修改。",
+            created_at=now,
+            updated_at=now,
+        )
+        for broker in brokers[: spec["broker_count"]]:
+            issue.broker_statuses.append(
+                BrokerIssueStatus(
+                    broker_id=broker.id,
+                    is_affected=True,
+                    impact_desc=f"{broker.name} 需跟进验证和修复版本确认。",
+                    fix_status="未开始",
+                    fix_version=spec["planned_fix_version"],
+                    released_at=None,
+                    verified_result="",
+                    owner_name=spec["owner_name"],
+                    remark="",
+                    updated_at=now,
+                )
+            )
+        session.add(issue)
+    session.flush()
 
 
 PROGRESS_BROKERS = [
@@ -64,6 +252,8 @@ PROGRESS_BROKERS = [
     "中信建投",
     "国融",
     "国元",
+    "金融街",
+    "东莞",
     "西部",
 ]
 
@@ -188,6 +378,7 @@ def ensure_progress_templates(session: Session) -> tuple:
                 project_type=spec["project_type"],
                 description=spec["description"],
                 status="active",
+                is_featured=spec["sort_no"] <= 3,
                 sort_no=spec["sort_no"],
                 created_at=now,
                 updated_at=now,
@@ -483,13 +674,14 @@ def ensure_progress_instances(session: Session, broker_map: dict, template_map: 
         }
 
     for broker_name in PROGRESS_BROKERS:
+        local_route_payload = local_route_data.get(broker_name, _default_status_payload("未开始"))
         _ensure_progress_instance(
             session=session,
             existing_instances=existing_instances,
             broker=broker_map[broker_name],
             template=template_map["local_route_upgrade"],
             item_map=item_map,
-            payload=local_route_data[broker_name],
+            payload=local_route_payload,
         )
         _ensure_progress_instance(
             session=session,

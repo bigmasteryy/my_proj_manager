@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>工作日历 Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #dce3ee;
+      --text: #1f2937;
+      --muted: #667085;
+      --primary: #2563eb;
+      --primary-soft: #e8f0ff;
+      --green: #12805c;
+      --green-soft: #e8f7ef;
+      --orange: #b45309;
+      --orange-soft: #fff3df;
+      --red: #b42318;
+      --red-soft: #fff1f0;
+      --shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 220px minmax(980px, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #101828;
+      color: #d0d5dd;
+      padding: 20px 14px;
+    }
+
+    .brand {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 4px 8px 18px;
+    }
+
+    .nav-title {
+      color: #8ea0b8;
+      font-size: 12px;
+      padding: 8px;
+      margin-top: 10px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: #e4e7ec;
+      margin-bottom: 4px;
+      text-decoration: none;
+    }
+
+    .nav-item.active {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.8;
+    }
+
+    .main {
+      padding: 22px 26px 36px;
+      overflow: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 26px;
+      line-height: 1.28;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    h3 {
+      font-size: 15px;
+    }
+
+    .muted {
+      color: var(--muted);
+      margin: 6px 0 0;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 7px;
+      min-height: 34px;
+      padding: 7px 12px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn.soft {
+      border-color: #c7d7fe;
+      background: var(--primary-soft);
+      color: #1849a9;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .kpis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      padding: 14px;
+    }
+
+    .card small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card strong {
+      font-size: 22px;
+    }
+
+    .card .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .content-layout {
+      display: grid;
+      grid-template-columns: minmax(620px, 1.2fr) minmax(360px, 0.8fr);
+      gap: 16px;
+    }
+
+    .panel {
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcff;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 7px;
+      padding: 6px 9px;
+      min-height: 30px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 18px;
+    }
+
+    .weekday {
+      color: #475467;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      padding-bottom: 4px;
+    }
+
+    .day {
+      min-height: 74px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .day-number {
+      font-weight: 700;
+    }
+
+    .day-note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .day.off {
+      background: #f2f4f7;
+      color: #98a2b3;
+    }
+
+    .day.holiday {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: #ffd5d2;
+    }
+
+    .day.work {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #b7e4cc;
+    }
+
+    .day.adjust {
+      background: var(--orange-soft);
+      color: var(--orange);
+      border-color: #ffdca8;
+    }
+
+    .side-list {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+    }
+
+    .list-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .list-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.orange {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .kpis,
+      .content-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">券商项目管理</div>
+      <div class="nav-title">日常工作</div>
+      <a class="nav-item" href="./new-broker-onboarding-demo.html"><span class="nav-dot"></span>新券商接入</a>
+      <div class="nav-item"><span class="nav-dot"></span>推进矩阵</div>
+      <div class="nav-item"><span class="nav-dot"></span>券商台账</div>
+      <div class="nav-title">治理</div>
+      <div class="nav-item"><span class="nav-dot"></span>问题风险</div>
+      <div class="nav-item"><span class="nav-dot"></span>模板中心</div>
+      <a class="nav-item active" href="./workday-calendar-demo.html"><span class="nav-dot"></span>工作日历</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">平台级治理</p>
+          <h1>工作日历</h1>
+          <p class="muted">统一维护工作日、法定节假日、调休工作日和特殊休息日，供所有排期能力复用。</p>
+        </div>
+        <div class="actions">
+          <a class="btn soft" href="./new-broker-onboarding-demo.html">返回新券商接入</a>
+          <a class="btn">导入节假日</a>
+          <a class="btn primary">新增修正</a>
+        </div>
+      </header>
+
+      <section class="grid kpis">
+        <article class="card">
+          <small>当前日历</small>
+          <strong>2026</strong>
+          <div class="sub">中国大陆工作日历</div>
+        </article>
+        <article class="card">
+          <small>法定节假日</small>
+          <strong>29</strong>
+          <div class="sub">自动内置，可手工覆盖</div>
+        </article>
+        <article class="card">
+          <small>调休工作日</small>
+          <strong>7</strong>
+          <div class="sub">周末但计入工作日</div>
+        </article>
+        <article class="card">
+          <small>手工修正</small>
+          <strong>3</strong>
+          <div class="sub">项目级排期实时读取</div>
+        </article>
+      </section>
+
+      <section class="content-layout">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>月历维护</h2>
+              <p class="muted">点击日期后可标记为工作日、休息日、节假日或调休工作日。</p>
+            </div>
+          </div>
+          <div class="calendar-toolbar">
+            <span class="chip">2026 年 5 月</span>
+            <span class="chip">默认：周一至周五工作</span>
+            <span class="chip">应用：中国大陆</span>
+          </div>
+          <div class="calendar-grid">
+            <div class="weekday">一</div>
+            <div class="weekday">二</div>
+            <div class="weekday">三</div>
+            <div class="weekday">四</div>
+            <div class="weekday">五</div>
+            <div class="weekday">六</div>
+            <div class="weekday">日</div>
+            <div class="day"><span class="day-number">4</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">5</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">6</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">7</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">8</span><span class="day-note">工作</span></div>
+            <div class="day off"><span class="day-number">9</span><span class="day-note">周末</span></div>
+            <div class="day off"><span class="day-number">10</span><span class="day-note">周末</span></div>
+            <div class="day"><span class="day-number">11</span><span class="day-note">工作</span></div>
+            <div class="day holiday"><span class="day-number">12</span><span class="day-note">法定节假</span></div>
+            <div class="day holiday"><span class="day-number">13</span><span class="day-note">法定节假</span></div>
+            <div class="day"><span class="day-number">14</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">15</span><span class="day-note">工作</span></div>
+            <div class="day work"><span class="day-number">16</span><span class="day-note">调休工作</span></div>
+            <div class="day off"><span class="day-number">17</span><span class="day-note">周末</span></div>
+            <div class="day"><span class="day-number">18</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">19</span><span class="day-note">工作</span></div>
+            <div class="day adjust"><span class="day-number">20</span><span class="day-note">特殊休息</span></div>
+            <div class="day"><span class="day-number">21</span><span class="day-note">工作</span></div>
+            <div class="day"><span class="day-number">22</span><span class="day-note">工作</span></div>
+            <div class="day off"><span class="day-number">23</span><span class="day-note">周末</span></div>
+            <div class="day off"><span class="day-number">24</span><span class="day-note">周末</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>规则与引用</h2>
+              <p class="muted">日历是平台能力，不属于某一个项目模块。</p>
+            </div>
+          </div>
+          <div class="side-list">
+            <div class="list-item">
+              <strong>默认规则</strong>
+              <p>周六、周日不算工作日；法定节假日不算工作日；调休上班日算工作日。</p>
+            </div>
+            <div class="list-item">
+              <strong>优先级</strong>
+              <p>手工修正优先于内置节假日，内置节假日优先于默认周末规则。</p>
+            </div>
+            <div class="list-item">
+              <strong>影响范围</strong>
+              <p>新券商接入排期、普通项目任务计划、风险计划关闭、临期/逾期提醒、周报周期统计。</p>
+            </div>
+            <div class="list-item">
+              <strong>更新策略</strong>
+              <p>未来年份可批量导入，历史年份保留快照，避免老项目计划被新规则误改。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top: 16px;">
+        <div class="panel-head">
+          <div>
+            <h2>手工修正记录</h2>
+            <p class="muted">这里保留谁在什么时候把某天改成了什么类型，便于追溯排期变化。</p>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>类型</th>
+              <th>原因</th>
+              <th>影响模块</th>
+              <th>更新人</th>
+              <th>更新时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2026-05-16</td>
+              <td><span class="tag green">调休工作日</span></td>
+              <td>节假日调休补班</td>
+              <td>全部排期</td>
+              <td>系统内置</td>
+              <td>2026-05-01</td>
+            </tr>
+            <tr>
+              <td>2026-05-20</td>
+              <td><span class="tag orange">特殊休息日</span></td>
+              <td>公司统一培训，项目排期不计入工作日</td>
+              <td>新券商接入、任务提醒</td>
+              <td>项目管理员</td>
+              <td>2026-05-18</td>
+            </tr>
+            <tr>
+              <td>2026-06-06</td>
+              <td><span class="tag red">节假日</span></td>
+              <td>端午假期补充</td>
+              <td>全部排期</td>
+              <td>系统内置</td>
+              <td>2026-05-01</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

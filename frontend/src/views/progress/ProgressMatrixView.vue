@@ -6,6 +6,10 @@
         <h3 style="margin: 0;">{{ matrix?.project.name || "项目推进矩阵" }}</h3>
       </div>
       <div class="hero-actions compact">
+        <el-button size="small" type="success" :disabled="!selectedProjectId || matrixLoading" :loading="aiAnalysisLoading" @click="openAiAnalysis">
+          <el-icon><DataAnalysis /></el-icon>
+          AI分析
+        </el-button>
         <el-button size="small" type="primary" @click="openProjectDialog">新增项目</el-button>
         <el-button size="small" :disabled="!selectedProjectId || matrixLoading" @click="openBrokerDialog">添加券商</el-button>
         <el-select
@@ -195,6 +199,61 @@
       </EmptyBlock>
     </section>
 
+    <el-drawer v-model="aiAnalysisVisible" title="AI数据分析" size="440px">
+      <div class="analysis-panel" v-loading="aiAnalysisLoading">
+        <template v-if="aiAnalysis">
+          <section class="analysis-section">
+            <small>分析对象</small>
+            <h4>{{ matrix?.project.name || "当前推进矩阵" }}</h4>
+            <p>{{ aiAnalysis.summary }}</p>
+            <el-alert
+              v-if="!aiAnalysis.configured"
+              type="info"
+              show-icon
+              :closable="false"
+              title="未配置 AI 服务，当前展示本地规则分析。配置 AI_API_KEY 后会调用 AI 生成分析。"
+            />
+            <el-alert
+              v-else-if="aiAnalysis.aiError"
+              type="warning"
+              show-icon
+              :closable="false"
+              :title="`AI 调用失败，已切换本地分析：${aiAnalysis.aiError}`"
+            />
+            <el-tag v-else type="success" effect="plain">{{ aiAnalysis.provider === "ai" ? `AI模型：${aiAnalysis.model}` : "本地分析" }}</el-tag>
+          </section>
+
+          <section class="analysis-section">
+            <h4>关键发现</h4>
+            <ul>
+              <li v-for="item in aiAnalysis.highlights" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <section class="analysis-section">
+            <h4>风险关注</h4>
+            <ul>
+              <li v-for="item in aiAnalysis.risks" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <section class="analysis-section">
+            <h4>推进建议</h4>
+            <ul>
+              <li v-for="item in aiAnalysis.suggestions" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+        </template>
+        <EmptyBlock v-else-if="!aiAnalysisLoading" title="还没有分析结果" description="点击下方按钮，基于当前推进矩阵生成分析。">
+          <el-button type="primary" :disabled="!selectedProjectId" @click="runAiAnalysis">开始分析</el-button>
+        </EmptyBlock>
+      </div>
+      <template #footer>
+        <el-button @click="aiAnalysisVisible = false">关闭</el-button>
+        <el-button type="primary" :disabled="!selectedProjectId" :loading="aiAnalysisLoading" @click="runAiAnalysis">重新分析</el-button>
+      </template>
+    </el-drawer>
+
     <el-dialog v-model="projectDialogVisible" title="新增项目" width="620px">
       <el-form :model="projectForm" label-width="110px">
         <el-form-item label="项目名称" required>
@@ -252,15 +311,17 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
+import { DataAnalysis } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 
 import EmptyBlock from "../../components/EmptyBlock.vue";
 import ProgressValueDisplay from "../../components/ProgressValueDisplay.vue";
 import StatusTag from "../../components/StatusTag.vue";
-import { addProgressProjectBrokers, createProgressProject, getProgressBrokers, getProgressMatrix, getProgressProjects } from "../../api/progress";
+import { addProgressProjectBrokers, analyzeProgressMatrix, createProgressProject, getProgressBrokers, getProgressMatrix, getProgressProjects } from "../../api/progress";
 import type {
   ProgressBrokerSimple,
   ProgressDynamicColumn,
+  ProgressMatrixAiAnalysis,
   ProgressMatrixResponse,
   ProgressProjectBrokerAddPayload,
   ProgressProjectCreatePayload,
@@ -306,8 +367,11 @@ const draggingColumnKey = ref("");
 
 const projectDialogVisible = ref(false);
 const brokerDialogVisible = ref(false);
+const aiAnalysisVisible = ref(false);
 const projectSubmitting = ref(false);
 const brokerSubmitting = ref(false);
+const aiAnalysisLoading = ref(false);
+const aiAnalysis = ref<ProgressMatrixAiAnalysis | null>(null);
 
 const projectForm = reactive<ProgressProjectCreatePayload>({
   code: "",
@@ -543,6 +607,28 @@ function openBrokerDialog() {
   brokerDialogVisible.value = true;
 }
 
+async function openAiAnalysis() {
+  aiAnalysisVisible.value = true;
+  if (!aiAnalysis.value) {
+    await runAiAnalysis();
+  }
+}
+
+async function runAiAnalysis() {
+  if (!selectedProjectId.value) {
+    ElMessage.warning("请先选择一个项目");
+    return;
+  }
+  aiAnalysisLoading.value = true;
+  try {
+    aiAnalysis.value = await analyzeProgressMatrix(selectedProjectId.value);
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.detail || "AI分析失败");
+  } finally {
+    aiAnalysisLoading.value = false;
+  }
+}
+
 async function handleCreateProject() {
   if (!projectForm.name.trim()) {
     ElMessage.warning("请先填写项目名称");
@@ -616,10 +702,12 @@ watch(
     const projectId = Number(value || 0);
     selectedProjectId.value = projectId || null;
     if (projectId) {
+      aiAnalysis.value = null;
       await loadMatrix(projectId);
     } else {
       matrix.value = null;
       columnOrder.value = [];
+      aiAnalysis.value = null;
     }
   }
 );
@@ -639,6 +727,34 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.analysis-panel {
+  min-height: 320px;
+}
+
+.analysis-section {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.analysis-section h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.analysis-section p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.analysis-section ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-main);
+  line-height: 1.8;
 }
 
 .matrix-header {

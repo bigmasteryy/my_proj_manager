@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新券商接入管理 Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #dce3ee;
+      --text: #1f2937;
+      --muted: #667085;
+      --primary: #2563eb;
+      --primary-soft: #e8f0ff;
+      --green: #12805c;
+      --green-soft: #e8f7ef;
+      --orange: #b45309;
+      --orange-soft: #fff3df;
+      --red: #b42318;
+      --red-soft: #fff1f0;
+      --purple: #6d28d9;
+      --purple-soft: #f0eaff;
+      --shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 220px minmax(980px, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #101828;
+      color: #d0d5dd;
+      padding: 20px 14px;
+    }
+
+    .brand {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 4px 8px 18px;
+    }
+
+    .nav-group {
+      margin-top: 10px;
+    }
+
+    .nav-title {
+      color: #8ea0b8;
+      font-size: 12px;
+      padding: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: #e4e7ec;
+      margin-bottom: 4px;
+    }
+
+    .nav-item.active {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.8;
+    }
+
+    .main {
+      padding: 22px 26px 36px;
+      overflow: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin: 0 0 6px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 26px;
+      line-height: 1.28;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    h3 {
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .muted {
+      color: var(--muted);
+      margin: 6px 0 0;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 7px;
+      min-height: 34px;
+      padding: 7px 12px;
+      cursor: default;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn.soft {
+      border-color: #c7d7fe;
+      background: var(--primary-soft);
+      color: #1849a9;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .kpis {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      padding: 14px;
+    }
+
+    .card small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card strong {
+      font-size: 22px;
+    }
+
+    .card .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel {
+      margin-top: 16px;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .filter-chip {
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      border-radius: 7px;
+      padding: 6px 9px;
+      min-height: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .broker-name {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .broker-name strong {
+      font-size: 14px;
+    }
+
+    .broker-name span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 150px;
+    }
+
+    .bar {
+      width: 92px;
+      height: 8px;
+      border-radius: 99px;
+      background: #e5e7eb;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--primary);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.orange {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .tag.blue {
+      color: #1849a9;
+      background: var(--primary-soft);
+    }
+
+    .tag.purple {
+      color: var(--purple);
+      background: var(--purple-soft);
+    }
+
+    .detail-layout {
+      display: grid;
+      grid-template-columns: minmax(620px, 1.15fr) minmax(380px, 0.85fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .detail-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+      background: #fbfcff;
+    }
+
+    .summary-item {
+      padding: 12px 14px;
+      border-right: 1px solid var(--line);
+    }
+
+    .summary-item:last-child {
+      border-right: 0;
+    }
+
+    .summary-item small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .summary-item strong {
+      font-size: 15px;
+    }
+
+    .timeline {
+      padding: 8px 14px 14px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf1f7;
+    }
+
+    .phase:last-child {
+      border-bottom: 0;
+    }
+
+    .phase-index {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: #1849a9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .phase.done .phase-index {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .phase.blocked .phase-index {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .phase-main {
+      min-width: 0;
+    }
+
+    .phase-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .phase-title strong {
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .phase-meta {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .phase-meta span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 12px 14px 0;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .tab {
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 7px 7px 0 0;
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 13px;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      background: #ffffff;
+      font-weight: 700;
+    }
+
+    .task-list {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .task strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .task p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .issue {
+      border-left: 3px solid var(--orange);
+    }
+
+    .issue.high {
+      border-left-color: var(--red);
+    }
+
+    .planner {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .planner-row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .planner-row label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .fake-input {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    .calendar-box {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      padding: 12px 14px 16px;
+    }
+
+    .day {
+      min-height: 36px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 12px;
+    }
+
+    .day.off {
+      background: #f2f4f7;
+      color: #98a2b3;
+    }
+
+    .day.holiday {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: #ffd5d2;
+    }
+
+    .day.work {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #b7e4cc;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 0 14px 14px;
+      margin: 0;
+    }
+
+    .link {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">券商项目管理</div>
+      <div class="nav-group">
+        <div class="nav-title">日常工作</div>
+        <div class="nav-item"><span class="nav-dot"></span>首页总览</div>
+        <div class="nav-item"><span class="nav-dot"></span>推进矩阵</div>
+        <div class="nav-item active"><span class="nav-dot"></span>新券商接入</div>
+        <div class="nav-item"><span class="nav-dot"></span>券商台账</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">治理</div>
+        <div class="nav-item"><span class="nav-dot"></span>问题风险</div>
+        <div class="nav-item"><span class="nav-dot"></span>模板中心</div>
+        <a class="nav-item" href="./workday-calendar-demo.html"><span class="nav-dot"></span>工作日历</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">新券商接入</p>
+          <h1>长流程项目独立管理，矩阵只看摘要</h1>
+          <p class="muted">每个券商接入项目相互独立：阶段计划、阶段任务、问题风险、推进日志都在详情内维护。</p>
+        </div>
+        <div class="actions">
+          <a class="btn soft" href="./workday-calendar-demo.html">工作日历</a>
+          <button class="btn">导出计划</button>
+          <a class="btn primary" href="./new-broker-create-demo.html">新建新券商</a>
+        </div>
+      </header>
+
+      <section class="grid kpis">
+        <article class="card">
+          <small>接入项目</small>
+          <strong>8</strong>
+          <div class="sub">WIP 5 / Hold 2 / Done 1</div>
+        </article>
+        <article class="card">
+          <small>本周到期阶段</small>
+          <strong>7</strong>
+          <div class="sub">含 2 个关键里程碑</div>
+        </article>
+        <article class="card">
+          <small>逾期任务</small>
+          <strong>12</strong>
+          <div class="sub">接口 4 / 测试 3 / 后台 2</div>
+        </article>
+        <article class="card">
+          <small>未关闭问题</small>
+          <strong>19</strong>
+          <div class="sub">高优先级 5 个</div>
+        </article>
+        <article class="card">
+          <small>平均偏差</small>
+          <strong>+6d</strong>
+          <div class="sub">相对基线计划</div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>接入项目总览</h2>
+            <p class="muted">这里承担“推进矩阵摘要”的角色：快速识别哪家券商卡住、谁负责、下一节点是什么。</p>
+          </div>
+          <div class="filters">
+            <span class="filter-chip">状态：全部</span>
+            <span class="filter-chip">负责人：全部</span>
+            <span class="filter-chip">只看逾期</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>券商</th>
+              <th>当前阶段</th>
+              <th>总进度</th>
+              <th>下一节点</th>
+              <th>计划上线</th>
+              <th>偏差</th>
+              <th>负责人</th>
+              <th>任务/问题</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="broker-name">
+                  <strong>东莞证券</strong>
+                  <span>订单系统对接</span>
+                </div>
+              </td>
+              <td><span class="tag orange">生产资源申请</span></td>
+              <td>
+                <div class="progress-wrap"><div class="bar"><span style="width: 62%"></span></div><strong>62%</strong></div>
+              </td>
+              <td>2026-07-02 系统安装部署</td>
+              <td>2026-08-28</td>
+              <td><span class="tag red">+9d</span></td>
+              <td>戴洪添</td>
+              <td>6 逾期 / 6 问题/风险</td>
+              <td><span class="link">查看详情</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="broker-name">
+                  <strong>华福证券</strong>
+                  <span>订单系统对接</span>
+                </div>
+              </td>
+              <td><span class="tag blue">接口功能适配</span></td>
+              <td>
+                <div class="progress-wrap"><div class="bar"><span style="width: 38%"></span></div><strong>38%</strong></div>
+              </td>
+              <td>2026-06-10 内部验收测试</td>
+              <td>2026-09-15</td>
+              <td><span class="tag orange">+3d</span></td>
+              <td>蒋张飞</td>
+              <td>3 逾期 / 4 问题</td>
+              <td><span class="link">查看详情</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="broker-name">
+                  <strong>财信证券</strong>
+                  <span>订单系统对接</span>
+                </div>
+              </td>
+              <td><span class="tag green">测试环境部署</span></td>
+              <td>
+                <div class="progress-wrap"><div class="bar"><span style="width: 28%"></span></div><strong>28%</strong></div>
+              </td>
+              <td>2026-06-01 信创环境适配</td>
+              <td>2026-10-12</td>
+              <td><span class="tag green">0d</span></td>
+              <td>陈良海</td>
+              <td>1 逾期 / 2 问题</td>
+              <td><span class="link">查看详情</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="broker-name">
+                  <strong>国联民生</strong>
+                  <span>订单系统对接</span>
+                </div>
+              </td>
+              <td><span class="tag purple">产品方案沟通</span></td>
+              <td>
+                <div class="progress-wrap"><div class="bar"><span style="width: 8%"></span></div><strong>8%</strong></div>
+              </td>
+              <td>2026-05-27 合规方案通过</td>
+              <td>2026-11-06</td>
+              <td><span class="tag green">0d</span></td>
+              <td>易勇</td>
+              <td>0 逾期 / 1 问题</td>
+              <td><span class="link">查看详情</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="detail-layout">
+        <div class="detail-card">
+          <div class="detail-head">
+            <div>
+              <h2>东莞证券 / 阶段计划</h2>
+              <p class="muted">自动排期按工作日计算，周末和法定节假日不计入工期。</p>
+            </div>
+            <div class="actions">
+              <button class="btn">查看基线</button>
+              <button class="btn primary">延期重算</button>
+            </div>
+          </div>
+          <div class="summary-strip">
+            <div class="summary-item"><small>计划周期</small><strong>2026-02-18 至 2026-08-28</strong></div>
+            <div class="summary-item"><small>工作日</small><strong>135d</strong></div>
+            <div class="summary-item"><small>当前阶段</small><strong>生产资源申请</strong></div>
+            <div class="summary-item"><small>未关闭问题/风险</small><strong>6</strong></div>
+          </div>
+          <div class="timeline">
+            <div class="phase done">
+              <div class="phase-index">1</div>
+              <div class="phase-main">
+                <div class="phase-title"><strong>产品方案沟通</strong><span class="tag green">Done</span></div>
+                <div class="phase-meta">
+                  <span>开始：2026-02-18</span>
+                  <span>工期：5d</span>
+                  <span>完成：2026-02-24</span>
+                  <span>实际：2026-02-24</span>
+                  <span>任务：4/4</span>
+                </div>
+              </div>
+            </div>
+            <div class="phase done">
+              <div class="phase-index">2</div>
+              <div class="phase-main">
+                <div class="phase-title"><strong>券商信息技术、合规部门产品方案通过</strong><span class="tag green">Done</span></div>
+                <div class="phase-meta">
+                  <span>开始：2026-02-25</span>
+                  <span>工期：25d</span>
+                  <span>完成：2026-04-01</span>
+                  <span>实际：2026-04-03</span>
+                  <span>任务：6/6</span>
+                </div>
+              </div>
+            </div>
+            <div class="phase done">
+              <div class="phase-index">3</div>
+              <div class="phase-main">
+                <div class="phase-title"><strong>测试环境部署</strong><span class="tag green">Done</span></div>
+                <div class="phase-meta">
+                  <span>开始：2026-04-10</span>
+                  <span>工期：10d</span>
+                  <span>完成：2026-04-23</span>
+                  <span>实际：2026-04-25</span>
+                  <span>任务：8/8</span>
+                </div>
+              </div>
+            </div>
+            <div class="phase blocked">
+              <div class="phase-index">4</div>
+              <div class="phase-main">
+                <div class="phase-title"><strong>接口和订单系统功能适配</strong><span class="tag red">阻塞</span></div>
+                <div class="phase-meta">
+                  <span>开始：2026-05-12</span>
+                  <span>工期：15d</span>
+                  <span>完成：2026-06-02</span>
+                  <span>实际：-</span>
+                  <span>任务：9/14</span>
+                </div>
+              </div>
+            </div>
+            <div class="phase">
+              <div class="phase-index">5</div>
+              <div class="phase-main">
+                <div class="phase-title"><strong>生产机器资源和周边依赖申请</strong><span class="tag orange">WIP</span></div>
+                <div class="phase-meta">
+                  <span>开始：2026-06-03</span>
+                  <span>工期：5d</span>
+                  <span>完成：2026-06-10</span>
+                  <span>实际：-</span>
+                  <span>任务：2/7</span>
+                </div>
+              </div>
+            </div>
+            <div class="phase">
+              <div class="phase-index">6</div>
+              <div class="phase-main">
+                <div class="phase-title"><strong>系统安装部署 / 空转 / 灰度 / 冷启动 / 通关测试 / 上线</strong><span class="tag blue">未开始</span></div>
+                <div class="phase-meta">
+                  <span>开始：2026-06-11</span>
+                  <span>工期：32d</span>
+                  <span>完成：2026-08-28</span>
+                  <span>实际：-</span>
+                  <span>任务：0/31</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-head">
+            <div>
+              <h2>阶段工作台</h2>
+              <p class="muted">选中阶段后，在这里处理任务、问题、风险和推进记录。</p>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab active">任务 14</div>
+            <div class="tab">问题/风险 6</div>
+            <div class="tab">日志 11</div>
+          </div>
+          <div class="task-list">
+            <div class="task">
+              <div>
+                <strong>接口适配：委托、撤单、查询链路字段确认</strong>
+                <p>负责人：戴洪添 / 计划完成：2026-05-22 / 当前卡点：券商返回字段缺少交易类别。</p>
+              </div>
+              <span class="tag red">逾期</span>
+            </div>
+            <div class="task">
+              <div>
+                <strong>客户端适配：PC 与 APP 交易入口联调</strong>
+                <p>负责人：林坚恒 / 计划完成：2026-05-27 / 已完成 APP，PC DLL 待发包。</p>
+              </div>
+              <span class="tag orange">WIP</span>
+            </div>
+            <div class="task">
+              <div>
+                <strong>H5 适配：开户后跳转参数与交易首页透传</strong>
+                <p>负责人：蒋张飞 / 计划完成：2026-05-28 / 需补充券商白名单。</p>
+              </div>
+              <span class="tag orange">WIP</span>
+            </div>
+            <div class="task">
+              <div>
+                <strong>测试：回归用例与异常单覆盖</strong>
+                <p>负责人：测试组 / 计划完成：2026-05-30 / 用例 38/52，通过率 81%。</p>
+              </div>
+              <span class="tag blue">推进中</span>
+            </div>
+            <div class="task issue high">
+              <div>
+                <strong>问题：测试环境柜台返回超时</strong>
+                <p>影响：接口适配和测试进度 / 责任人：券商技术 / 计划解决：2026-05-24。</p>
+              </div>
+              <span class="tag red">高</span>
+            </div>
+            <div class="task issue">
+              <div>
+                <strong>风险：生产资源申请未确认，可能影响系统安装窗口</strong>
+                <p>影响：后续系统安装部署和空转阶段 / 责任人：运维协调 / 计划关闭：2026-06-05。</p>
+              </div>
+              <span class="tag orange">风险</span>
+            </div>
+          </div>
+          <p class="section-note">阶段进度可由任务完成率自动汇总，也允许项目经理手动修正。问题和风险可以挂到阶段，也可以挂到具体任务。</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="detail-card" style="border: 0; box-shadow: none;">
+          <div class="panel-head">
+            <div>
+              <h2>全局工作日历引用</h2>
+              <p class="muted">新券商接入只选择日历规则，具体节假日维护放到平台级页面。</p>
+            </div>
+            <a class="btn soft" href="./workday-calendar-demo.html">打开日历</a>
+          </div>
+          <div class="planner">
+            <div class="planner-row">
+              <label>适用范围</label>
+              <div class="fake-input">新券商接入、普通项目任务、风险计划关闭、周报统计</div>
+            </div>
+            <div class="planner-row">
+              <label>默认规则</label>
+              <div class="fake-input">周六、周日、法定节假日不算工作日；调休上班日算工作日</div>
+            </div>
+            <div class="planner-row">
+              <label>当前日历</label>
+              <div class="fake-input">中国大陆工作日历 2026，含手工修正 3 条</div>
+            </div>
+            <div class="planner-row">
+              <label>排期影响</label>
+              <div class="fake-input">计划生成和延期重算时读取日历，不在接入项目内单独维护</div>
+            </div>
+          </div>
+          <p class="section-note">这里保留引用关系，避免把平台级日历能力误认为只服务新券商接入。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

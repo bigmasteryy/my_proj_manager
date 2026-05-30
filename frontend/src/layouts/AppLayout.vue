@@ -17,6 +17,23 @@
           <span>首页驾驶舱</span>
         </el-menu-item>
 
+        <el-sub-menu v-if="isAdmin" index="overview-group">
+          <template #title>
+            <span class="menu-title">
+              <el-icon><DataBoard /></el-icon>
+              <span>总览</span>
+            </span>
+          </template>
+          <el-menu-item index="/overview/projects">
+            <el-icon><Tickets /></el-icon>
+            <span>项目总览</span>
+          </el-menu-item>
+          <el-menu-item index="/overview/brokers">
+            <el-icon><Tickets /></el-icon>
+            <span>券商总览</span>
+          </el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu v-if="isAdmin" index="project-group">
           <template #title>
             <span class="menu-title">
@@ -24,13 +41,13 @@
               <span>项目进度</span>
             </span>
           </template>
-          <el-menu-item index="/progress/overview">
-            <el-icon><Tickets /></el-icon>
-            <span>项目总览</span>
-          </el-menu-item>
           <el-menu-item index="/progress/matrix">
             <el-icon><List /></el-icon>
             <span>推进矩阵</span>
+          </el-menu-item>
+          <el-menu-item index="/new-brokers">
+            <el-icon><Tickets /></el-icon>
+            <span>新券商接入</span>
           </el-menu-item>
           <el-menu-item index="/progress/brokers">
             <el-icon><Tickets /></el-icon>
@@ -47,6 +64,35 @@
           <el-menu-item index="/progress/reports">
             <el-icon><Document /></el-icon>
             <span>项目周报</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu v-if="isAdmin" index="broker-group">
+          <template #title>
+            <span class="menu-title">
+              <el-icon><Tickets /></el-icon>
+              <span>券商管理</span>
+            </span>
+          </template>
+          <el-menu-item index="/brokers">
+            <el-icon><List /></el-icon>
+            <span>券商列表</span>
+          </el-menu-item>
+          <el-menu-item index="/brokers/servers">
+            <el-icon><Tickets /></el-icon>
+            <span>服务器</span>
+          </el-menu-item>
+          <el-menu-item index="/brokers/entrust-sites">
+            <el-icon><Tickets /></el-icon>
+            <span>委托主站</span>
+          </el-menu-item>
+          <el-menu-item index="/brokers/versions">
+            <el-icon><Document /></el-icon>
+            <span>版本管理</span>
+          </el-menu-item>
+          <el-menu-item index="/brokers/issues">
+            <el-icon><WarningFilled /></el-icon>
+            <span>问题与需求</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -84,6 +130,11 @@
           <span>模板中心</span>
         </el-menu-item>
 
+        <el-menu-item v-if="isAdmin" index="/workday-calendar">
+          <el-icon><Calendar /></el-icon>
+          <span>工作日历</span>
+        </el-menu-item>
+
         <el-menu-item v-if="currentUser?.role === 'admin'" index="/users">
           <el-icon><UserFilled /></el-icon>
           <span>用户管理</span>
@@ -104,7 +155,7 @@
         </div>
         <div class="header-actions">
           <el-button v-if="currentUser?.role === 'admin'" size="small" @click="handleResetDemoData">重置演示数据</el-button>
-          <el-button size="small" type="primary" @click="router.push(isAdmin ? '/progress/overview' : '/personal/daily')">
+          <el-button size="small" type="primary" @click="router.push(isAdmin ? '/overview/projects' : '/personal/daily')">
             {{ isAdmin ? "查看项目总览" : "查看每日任务" }}
           </el-button>
           <el-button size="small" @click="handleLogout">退出登录</el-button>
@@ -146,7 +197,7 @@ const route = useRoute();
 const router = useRouter();
 const currentUser = ref<AuthUser | null>(getStoredUser());
 const isAdmin = computed(() => currentUser.value?.role === "admin");
-const defaultOpeneds = computed(() => (isAdmin.value ? ["project-group", "personal-group"] : ["personal-group"]));
+const defaultOpeneds = computed(() => (isAdmin.value ? ["overview-group", "project-group", "broker-group", "personal-group"] : ["personal-group"]));
 const roleLabel = computed(() => {
   if (currentUser.value?.role === "admin") {
     return "管理员";
@@ -174,7 +225,7 @@ async function handleResetDemoData() {
 
   await resetDemoData();
   ElMessage.success("演示数据已重置");
-  await router.push("/progress/overview");
+  await router.push("/overview/projects");
   window.location.reload();
 }
 
@@ -205,7 +256,7 @@ onMounted(async () => {
   gap: 14px;
   padding: 18px 14px;
   border-right: 1px solid var(--border);
-  background: rgba(255, 251, 245, 0.84);
+  background: rgba(247, 250, 253, 0.88);
   backdrop-filter: blur(16px);
 }
 

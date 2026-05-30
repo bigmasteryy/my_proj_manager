@@ -15,6 +15,10 @@ class ProgressProjectCreatePayload(BaseModel):
     sort_no: Optional[int] = None
 
 
+class ProgressFeaturedProjectsUpdatePayload(BaseModel):
+    project_template_ids: List[int] = Field(default_factory=list)
+
+
 class ProgressProjectBrokerAddPayload(BaseModel):
     broker_ids: List[int] = Field(default_factory=list)
     input_mode: str = Field(default="明细", max_length=20)
@@ -72,6 +76,31 @@ class ProgressRiskCreatePayload(BaseModel):
 
 class ProgressRiskUpdatePayload(ProgressRiskCreatePayload):
     pass
+
+
+class ProgressTaskCreatePayload(BaseModel):
+    item_template_id: Optional[int] = None
+    stage2_step_instance_id: Optional[int] = None
+    title: str = Field(min_length=1, max_length=200)
+    description: Optional[str] = None
+    owner_name: Optional[str] = Field(default=None, max_length=100)
+    collaborator_names: Optional[str] = Field(default=None, max_length=255)
+    priority: str = Field(default="中", min_length=1, max_length=20)
+    status: str = Field(default="未开始", min_length=1, max_length=20)
+    planned_start_date: Optional[date] = None
+    planned_finish_date: Optional[date] = None
+    actual_finish_date: Optional[date] = None
+    completion_result: Optional[str] = None
+    remark: Optional[str] = None
+
+
+class ProgressTaskUpdatePayload(ProgressTaskCreatePayload):
+    pass
+
+
+class ProgressTaskStatusPayload(BaseModel):
+    completion_result: Optional[str] = None
+    remark: Optional[str] = None
 
 
 class ProgressStage2StepCreatePayload(BaseModel):

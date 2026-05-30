@@ -1,0 +1,396 @@
+<style>
+  :root {
+    --bg: #eef3f8;
+    --panel: rgba(255, 255, 255, 0.94);
+    --border: #dbe5f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --orange: #ea580c;
+    --orange-soft: #ffedd5;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+      linear-gradient(180deg, #f8fbff, var(--bg));
+  }
+
+  .shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 26px;
+    border-radius: 24px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .hero-copy h1 {
+    margin: 0 0 10px;
+    color: var(--text);
+    font-size: 36px;
+    line-height: 1.08;
+  }
+
+  .hero-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 760px;
+  }
+
+  .hero-kicker {
+    margin-bottom: 10px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .panel {
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .catalog {
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .catalog h2,
+  .preview h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 24px;
+  }
+
+  .catalog-head,
+  .preview-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .page-card {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #fff, #f8fbff);
+    cursor: pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  }
+
+  .page-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    border-color: rgba(37,99,235,0.22);
+  }
+
+  .page-card.active {
+    border-color: rgba(37,99,235,0.26);
+    background: linear-gradient(180deg, rgba(239,246,255,0.95), rgba(248,250,252,0.95));
+    box-shadow: inset 0 0 0 1px rgba(37,99,235,0.10);
+  }
+
+  .page-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .page-title {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .tag-blue { background: var(--blue-soft); color: #1d4ed8; }
+  .tag-green { background: var(--green-soft); color: #166534; }
+  .tag-orange { background: var(--orange-soft); color: #c2410c; }
+  .tag-red { background: var(--red-soft); color: #b91c1c; }
+
+  .page-meta {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .page-points {
+    margin: 0;
+    padding-left: 18px;
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .preview {
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .preview-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .preview-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .link-btn,
+  .ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .link-btn {
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    box-shadow: 0 8px 18px rgba(37,99,235,0.20);
+  }
+
+  .ghost-btn {
+    color: #334155;
+    background: #fff;
+    border: 1px solid var(--border);
+  }
+
+  .preview-frame {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #fff;
+    min-height: 780px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+  }
+
+  .preview-frame iframe {
+    width: 100%;
+    height: 780px;
+    border: 0;
+    display: block;
+    background: #fff;
+  }
+
+  .note-box {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+</style>
+
+<div class="shell">
+  <div class="hero">
+    <div class="hero-copy">
+      <div class="hero-kicker">统一展示入口 / 五张核心页面</div>
+      <h1>把项目总览、券商总览、协作任务、排期中心、问题中心放到同一个评审入口里</h1>
+      <p>
+        这版不再是一张一张单独看，而是做成一个统一展示页。左侧是页面目录，右侧是当前页面预览。
+        这样更适合整套方案连续评审，也更容易和现有系统结构一起对齐。
+      </p>
+    </div>
+    <div class="hero-actions">
+      <div class="chip">项目经理视角</div>
+      <div class="chip">券商口径统一</div>
+      <div class="chip">收进现有系统结构</div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel catalog">
+      <div class="catalog-head">
+        <div>
+          <h2>页面目录</h2>
+          <div class="sub">按“先看整体、再看执行、最后看风险闭环”的顺序组织。</div>
+        </div>
+      </div>
+
+      <div class="page-card active" data-src="/files/overview-dual-dashboard.html" data-name="项目总览 / 券商总览">
+        <div class="page-top">
+          <div class="page-title">项目总览 / 券商总览</div>
+          <span class="tag tag-blue">双首页</span>
+        </div>
+        <div class="page-meta">先解决“按项目看多券商推进”和“按券商看多项目推进”两条主线。</div>
+        <ul class="page-points">
+          <li>项目总览：首页偏推进矩阵与重点项目</li>
+          <li>券商总览：首页偏券商经营与多项目协同</li>
+        </ul>
+      </div>
+
+      <div class="page-card" data-src="/files/tasks-workbench.html" data-name="协作任务 / 我的待办">
+        <div class="page-top">
+          <div class="page-title">协作任务 / 我的待办</div>
+          <span class="tag tag-green">执行</span>
+        </div>
+        <div class="page-meta">左边管全局协作任务池，右边只保留“我今天 / 本周 / 逾期要做什么”。</div>
+        <ul class="page-points">
+          <li>适合项目经理分配和筛选任务</li>
+          <li>适合执行者每天打开直接处理</li>
+        </ul>
+      </div>
+
+      <div class="page-card" data-src="/files/scheduling-center.html" data-name="排期中心">
+        <div class="page-top">
+          <div class="page-title">排期中心</div>
+          <span class="tag tag-orange">时间</span>
+        </div>
+        <div class="page-meta">把升级包、测试安排、上线窗口和里程碑放到同一条标准排期线上。</div>
+        <ul class="page-points">
+          <li>先看关键里程碑</li>
+          <li>再看排期总表、延期和冲突</li>
+        </ul>
+      </div>
+
+      <div class="page-card" data-src="/files/issue-center.html" data-name="问题中心">
+        <div class="page-top">
+          <div class="page-title">问题中心</div>
+          <span class="tag tag-red">风险</span>
+        </div>
+        <div class="page-meta">把共享问题、个性问题和阻塞项集中收口，真正形成问题闭环。</div>
+        <ul class="page-points">
+          <li>高风险 / 阻塞问题优先暴露</li>
+          <li>补充最近跟进和关闭结果</li>
+        </ul>
+      </div>
+
+      <div class="note-box">
+        当前入口页把“项目总览”和“券商总览”合在同一张预览里，方便对照双首页逻辑。
+        如果后面要继续收细节，可以把它们再拆成两张独立高保真页。
+      </div>
+    </div>
+
+    <div class="panel preview">
+      <div class="preview-head">
+        <div>
+          <h2 id="preview-title">项目总览 / 券商总览</h2>
+          <div class="sub">右侧直接嵌入当前选中的页面预览，不用每次换一个临时链接。</div>
+        </div>
+      </div>
+
+      <div class="preview-toolbar">
+        <div class="sub">当前预览页会保持在这个入口下切换，适合连续评审整套方案。</div>
+        <div class="preview-actions">
+          <a id="open-current" class="ghost-btn" href="/files/overview-dual-dashboard.html" target="_blank" rel="noreferrer">新窗口打开</a>
+          <a id="reload-current" class="link-btn" href="javascript:void(0)">重新加载预览</a>
+        </div>
+      </div>
+
+      <div class="preview-frame">
+        <iframe id="preview-frame" src="/files/overview-dual-dashboard.html" title="design preview"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.page-card'));
+    var frame = document.getElementById('preview-frame');
+    var title = document.getElementById('preview-title');
+    var openCurrent = document.getElementById('open-current');
+    var reloadCurrent = document.getElementById('reload-current');
+
+    function activate(card) {
+      cards.forEach(function (item) {
+        item.classList.toggle('active', item === card);
+      });
+
+      var src = card.getAttribute('data-src');
+      var name = card.getAttribute('data-name');
+      frame.src = src;
+      title.textContent = name;
+      openCurrent.href = src;
+    }
+
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        activate(card);
+      });
+    });
+
+    reloadCurrent.addEventListener('click', function () {
+      frame.src = frame.src;
+    });
+  })();
+</script>

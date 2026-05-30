@@ -15,10 +15,93 @@ class Broker(Base):
     contact_name = Column(String(50), nullable=True)
     contact_phone = Column(String(30), nullable=True)
     status = Column(String(20), nullable=False, default="active")
+    business_status = Column(String(20), nullable=False, default="待对接")
+    system_version = Column(String(50), nullable=True)
+    system_version_updated_at = Column(DateTime, nullable=True)
+    system_version_content = Column(Text, nullable=True)
+    is_featured = Column(Boolean, nullable=False, default=False)
     note = Column(Text, nullable=True)
 
     projects = relationship("Project", back_populates="broker", cascade="all, delete-orphan")
     progress_instances = relationship("ProgressBrokerProjectInstance", back_populates="broker", cascade="all, delete-orphan")
+    servers = relationship("BrokerServer", back_populates="broker", cascade="all, delete-orphan")
+    entrust_sites = relationship("BrokerEntrustSite", back_populates="broker", cascade="all, delete-orphan")
+    issue_statuses = relationship("BrokerIssueStatus", back_populates="broker", cascade="all, delete-orphan")
+
+
+class BrokerIssue(Base):
+    __tablename__ = "broker_issues"
+
+    id = Column(Integer, primary_key=True, index=True)
+    issue_type = Column(String(20), nullable=False)
+    title = Column(String(200), nullable=False)
+    priority = Column(String(20), nullable=False, default="中")
+    status = Column(String(30), nullable=False, default="待分析")
+    description = Column(Text, nullable=True)
+    impact_scope = Column(Text, nullable=True)
+    planned_fix_version = Column(String(100), nullable=True)
+    solution = Column(Text, nullable=True)
+    owner_name = Column(String(100), nullable=True)
+    planned_finish_date = Column(Date, nullable=True)
+    remark = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+
+    broker_statuses = relationship("BrokerIssueStatus", back_populates="issue", cascade="all, delete-orphan")
+
+
+class BrokerIssueStatus(Base):
+    __tablename__ = "broker_issue_statuses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    issue_id = Column(Integer, ForeignKey("broker_issues.id"), nullable=False)
+    broker_id = Column(Integer, ForeignKey("brokers.id"), nullable=False)
+    is_affected = Column(Boolean, nullable=False, default=True)
+    impact_desc = Column(Text, nullable=True)
+    fix_status = Column(String(30), nullable=False, default="未开始")
+    fix_version = Column(String(100), nullable=True)
+    released_at = Column(DateTime, nullable=True)
+    verified_result = Column(Text, nullable=True)
+    owner_name = Column(String(100), nullable=True)
+    remark = Column(Text, nullable=True)
+    updated_at = Column(DateTime, nullable=False)
+
+    issue = relationship("BrokerIssue", back_populates="broker_statuses")
+    broker = relationship("Broker", back_populates="issue_statuses")
+
+
+class BrokerServer(Base):
+    __tablename__ = "broker_servers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    broker_id = Column(Integer, ForeignKey("brokers.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    cpu = Column(String(100), nullable=True)
+    memory = Column(String(100), nullable=True)
+    operating_system = Column(String(100), nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    remark = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+
+    broker = relationship("Broker", back_populates="servers")
+
+
+class BrokerEntrustSite(Base):
+    __tablename__ = "broker_entrust_sites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    broker_id = Column(Integer, ForeignKey("brokers.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    client_type = Column(String(20), nullable=False)
+    software_version = Column(String(50), nullable=True)
+    updated_at = Column(DateTime, nullable=True)
+    operating_system = Column(String(20), nullable=True)
+    is_xinchuang = Column(Boolean, nullable=False, default=False)
+    remark = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False)
+
+    broker = relationship("Broker", back_populates="entrust_sites")
 
 
 class Project(Base):
@@ -199,6 +282,7 @@ class ProgressProjectTemplate(Base):
     project_type = Column(String(50), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default="active")
+    is_featured = Column(Boolean, nullable=False, default=False)
     sort_no = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
@@ -254,6 +338,7 @@ class ProgressBrokerProjectInstance(Base):
     logs = relationship("ProgressLog", back_populates="instance", cascade="all, delete-orphan")
     risks = relationship("ProgressRisk", back_populates="instance", cascade="all, delete-orphan")
     stage2_step_instances = relationship("ProgressStage2StepInstance", back_populates="instance", cascade="all, delete-orphan")
+    tasks = relationship("ProgressTask", back_populates="instance", cascade="all, delete-orphan")
 
 
 class ProgressItemValue(Base):
@@ -312,6 +397,33 @@ class ProgressRisk(Base):
     updated_at = Column(DateTime, nullable=False)
 
     instance = relationship("ProgressBrokerProjectInstance", back_populates="risks")
+
+
+class ProgressTask(Base):
+    __tablename__ = "progress_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    broker_project_instance_id = Column(Integer, ForeignKey("progress_broker_project_instances.id"), nullable=False)
+    item_template_id = Column(Integer, ForeignKey("progress_item_templates.id"), nullable=True)
+    stage2_step_instance_id = Column(Integer, ForeignKey("progress_stage2_step_instances.id"), nullable=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    owner_name = Column(String(100), nullable=True)
+    collaborator_names = Column(String(255), nullable=True)
+    priority = Column(String(20), nullable=False, default="中")
+    status = Column(String(20), nullable=False, default="未开始")
+    planned_start_date = Column(Date, nullable=True)
+    planned_finish_date = Column(Date, nullable=True)
+    actual_finish_date = Column(Date, nullable=True)
+    completion_result = Column(Text, nullable=True)
+    remark = Column(Text, nullable=True)
+    created_by = Column(String(100), nullable=True)
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+
+    instance = relationship("ProgressBrokerProjectInstance", back_populates="tasks")
+    item_template = relationship("ProgressItemTemplate")
+    stage2_step_instance = relationship("ProgressStage2StepInstance")
 
 
 class ProgressStage2GroupTemplate(Base):

@@ -12,7 +12,15 @@ const ProgressLogsView = () => import("../views/progress/ProgressLogsView.vue");
 const ProgressRisksView = () => import("../views/progress/ProgressRisksView.vue");
 const ProgressReportView = () => import("../views/progress/ProgressReportView.vue");
 const ProgressInstanceDetailView = () => import("../views/progress/ProgressInstanceDetailView.vue");
+const NewBrokerOnboardingView = () => import("../views/newBroker/NewBrokerOnboardingView.vue");
+const NewBrokerCreateView = () => import("../views/newBroker/NewBrokerCreateView.vue");
+const WorkdayCalendarView = () => import("../views/newBroker/WorkdayCalendarView.vue");
+const BrokerOverviewView = () => import("../views/overview/BrokerOverviewView.vue");
 const BrokerLedgerView = () => import("../views/brokers/BrokerLedgerView.vue");
+const BrokerServersView = () => import("../views/brokers/BrokerServersView.vue");
+const BrokerEntrustSitesView = () => import("../views/brokers/BrokerEntrustSitesView.vue");
+const BrokerVersionView = () => import("../views/brokers/BrokerVersionView.vue");
+const BrokerIssuesView = () => import("../views/brokers/BrokerIssuesView.vue");
 const ProjectListView = () => import("../views/project/ProjectListView.vue");
 const ProjectDetailView = () => import("../views/project/ProjectDetailView.vue");
 const RiskCenterView = () => import("../views/risks/RiskCenterView.vue");
@@ -35,18 +43,26 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     component: AppLayout,
-    redirect: "/progress/overview",
+    redirect: "/overview/projects",
     meta: { requiresAuth: true },
     children: [
       { path: "dashboard", name: "dashboard", component: DashboardView, meta: { requiresAdmin: true } },
-      { path: "progress/overview", name: "progress-overview", component: ProgressOverviewView, meta: { requiresAdmin: true } },
+      { path: "overview/projects", name: "overview-projects", component: ProgressOverviewView, meta: { requiresAdmin: true } },
+      { path: "overview/brokers", name: "overview-brokers", component: BrokerOverviewView, meta: { requiresAdmin: true } },
+      { path: "progress/overview", redirect: "/overview/projects" },
       { path: "progress/matrix", name: "progress-matrix", component: ProgressMatrixView, meta: { requiresAdmin: true } },
       { path: "progress/brokers", name: "progress-brokers", component: BrokerProgressView, meta: { requiresAdmin: true } },
       { path: "progress/logs", name: "progress-logs", component: ProgressLogsView, meta: { requiresAdmin: true } },
       { path: "progress/risks", name: "progress-risks", component: ProgressRisksView, meta: { requiresAdmin: true } },
       { path: "progress/reports", name: "progress-reports", component: ProgressReportView, meta: { requiresAdmin: true } },
       { path: "progress/instances/:id", name: "progress-instance-detail", component: ProgressInstanceDetailView, meta: { requiresAdmin: true } },
+      { path: "new-brokers", name: "new-brokers", component: NewBrokerOnboardingView, meta: { requiresAdmin: true } },
+      { path: "new-brokers/create", name: "new-broker-create", component: NewBrokerCreateView, meta: { requiresAdmin: true } },
       { path: "brokers", name: "brokers", component: BrokerLedgerView, meta: { requiresAdmin: true } },
+      { path: "brokers/servers", name: "broker-servers", component: BrokerServersView, meta: { requiresAdmin: true } },
+      { path: "brokers/entrust-sites", name: "broker-entrust-sites", component: BrokerEntrustSitesView, meta: { requiresAdmin: true } },
+      { path: "brokers/versions", name: "broker-versions", component: BrokerVersionView, meta: { requiresAdmin: true } },
+      { path: "brokers/issues", name: "broker-issues", component: BrokerIssuesView, meta: { requiresAdmin: true } },
       { path: "projects", name: "projects", component: ProjectListView, meta: { requiresAdmin: true } },
       { path: "projects/:id", name: "project-detail", component: ProjectDetailView, meta: { requiresAdmin: true } },
       { path: "risks", name: "risks", component: RiskCenterView, meta: { requiresAdmin: true } },
@@ -60,6 +76,7 @@ const routes: RouteRecordRaw[] = [
       { path: "history/personal", name: "personal-history", component: PersonalHistoryView },
       { path: "users", name: "users", component: UserManagementView, meta: { requiresAdmin: true } },
       { path: "templates", name: "templates", component: TemplateCenterView, meta: { requiresAdmin: true } },
+      { path: "workday-calendar", name: "workday-calendar", component: WorkdayCalendarView, meta: { requiresAdmin: true } },
       { path: "reports", name: "reports", component: ReportView, meta: { requiresAdmin: true } }
     ]
   }
@@ -74,7 +91,7 @@ router.beforeEach((to) => {
   if (to.path === "/login") {
     if (isAuthenticated()) {
       const user = getStoredUser();
-      return user?.role === "admin" ? "/progress/overview" : "/personal/daily";
+      return user?.role === "admin" ? "/overview/projects" : "/personal/daily";
     }
     return true;
   }

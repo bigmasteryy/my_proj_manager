@@ -1,0 +1,589 @@
+<style>
+  :root {
+    --bg: #eef3f8;
+    --panel: rgba(255, 255, 255, 0.92);
+    --border: #dbe5f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --orange: #ea580c;
+    --orange-soft: #ffedd5;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+    --slate-soft: #f8fafc;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+      linear-gradient(180deg, #f8fbff, var(--bg));
+  }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    border-radius: 24px;
+    padding: 20px 18px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .brand {
+    margin-bottom: 18px;
+  }
+
+  .brand h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  .brand p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .nav-group {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .nav-title {
+    padding: 8px 10px 2px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .nav-item {
+    padding: 11px 12px;
+    border-radius: 14px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+  }
+
+  .nav-item.active {
+    color: #0f172a;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .content-shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .hero-kicker {
+    margin-bottom: 10px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-copy h1 {
+    margin: 0 0 8px;
+    font-size: 34px;
+    color: var(--text);
+    line-height: 1.08;
+  }
+
+  .hero-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 760px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .stat {
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  }
+
+  .stat-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .panel {
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    padding: 22px;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-head h2,
+  .section-head h3 {
+    margin: 0;
+    color: var(--text);
+  }
+
+  .section-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .filter {
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .table {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .row {
+    display: grid;
+    align-items: center;
+  }
+
+  .row.tasks {
+    grid-template-columns: 1.55fr 0.95fr 0.9fr 0.85fr 0.8fr 0.8fr 0.95fr;
+  }
+
+  .row.todo {
+    grid-template-columns: 1.35fr 0.95fr 0.85fr 0.85fr 0.8fr;
+  }
+
+  .row.header {
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+  }
+
+  .row:not(.header) {
+    border-top: 1px solid #edf2f7;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .row > div {
+    padding: 13px 14px;
+  }
+
+  .task-title {
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+
+  .task-sub {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .pill-blue { background: var(--blue-soft); color: #1d4ed8; }
+  .pill-green { background: var(--green-soft); color: #166534; }
+  .pill-orange { background: var(--orange-soft); color: #c2410c; }
+  .pill-red { background: var(--red-soft); color: #b91c1c; }
+
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .mini-box {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #fff, #f8fbff);
+  }
+
+  .mini-box span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .mini-box strong {
+    color: var(--text);
+    font-size: 24px;
+  }
+
+  .stack {
+    display: grid;
+    gap: 16px;
+  }
+
+  .card-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .card-item {
+    padding: 15px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--slate-soft);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .card-meta {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .link {
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>项目管理平台</h2>
+      <p>这张页直接放进现有系统，解决“多人协作任务”和“我的待办”两条线。</p>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">总览</div>
+      <div class="nav-item">项目总览</div>
+      <div class="nav-item">券商总览</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">推进</div>
+      <div class="nav-item">项目推进矩阵</div>
+      <div class="nav-item">排期中心</div>
+      <div class="nav-item">问题中心</div>
+      <div class="nav-item active">协作任务</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">基础资料</div>
+      <div class="nav-item">券商列表</div>
+      <div class="nav-item">服务器</div>
+      <div class="nav-item">委托主站</div>
+      <div class="nav-item">版本管理</div>
+    </div>
+  </aside>
+
+  <div class="content-shell">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="hero-kicker">协作任务 / 我的待办</div>
+        <h1>左边统管协作任务，右边只盯“我今天该做什么”</h1>
+        <p>
+          这张页把“管理视角”和“执行视角”放进同一张工作台：左边是项目内多人协作任务池，适合分配、筛选、跟踪；
+          右边是统一的我的待办，只保留今天、本周、逾期这些真正需要立即处理的事。
+        </p>
+      </div>
+      <div class="hero-actions">
+        <div class="chip">创建任务</div>
+        <div class="chip">批量分配</div>
+        <div class="chip">导出本周任务</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">任务总数</div><div class="stat-value">86</div></div>
+      <div class="stat"><div class="stat-label">本周到期</div><div class="stat-value">19</div></div>
+      <div class="stat"><div class="stat-label">已逾期</div><div class="stat-value">6</div></div>
+      <div class="stat"><div class="stat-label">待我处理</div><div class="stat-value">12</div></div>
+      <div class="stat"><div class="stat-label">阻塞任务</div><div class="stat-value">4</div></div>
+    </div>
+
+    <div class="workspace">
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h2>协作任务池</h2>
+            <p>以项目和券商为主索引，方便项目经理分配、筛选、追踪多人协作事项。</p>
+          </div>
+          <div class="link">查看全部任务</div>
+        </div>
+
+        <div class="filters">
+          <div class="filter">项目：本地路由升级</div>
+          <div class="filter">券商：全部</div>
+          <div class="filter">状态：进行中</div>
+          <div class="filter">负责人：全部</div>
+          <div class="filter">本周到期</div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-box">
+            <span>进行中</span>
+            <strong>31</strong>
+          </div>
+          <div class="mini-box">
+            <span>待确认</span>
+            <strong>14</strong>
+          </div>
+          <div class="mini-box">
+            <span>已阻塞</span>
+            <strong>4</strong>
+          </div>
+        </div>
+
+        <div class="table">
+          <div class="row tasks header">
+            <div>任务</div>
+            <div>项目</div>
+            <div>券商</div>
+            <div>负责人</div>
+            <div>状态</div>
+            <div>截止</div>
+            <div>操作</div>
+          </div>
+          <div class="row tasks">
+            <div>
+              <div class="task-title">准备东吴测试包并同步测试安排</div>
+              <div class="task-sub">关联排期：升级包准备 · 需要与测试窗口确认一起推进</div>
+            </div>
+            <div>本地路由升级</div>
+            <div>东吴</div>
+            <div>张三</div>
+            <div><span class="pill pill-orange">进行中</span></div>
+            <div>5月13日</div>
+            <div class="link">查看详情</div>
+          </div>
+          <div class="row tasks">
+            <div>
+              <div class="task-title">确认国金 Linux 主站灰度窗口</div>
+              <div class="task-sub">关联排期：上线安排 · 当前在等券商回复时间窗口</div>
+            </div>
+            <div>Linux 主站推进</div>
+            <div>国金</div>
+            <div>李四</div>
+            <div><span class="pill pill-blue">待确认</span></div>
+            <div>5月14日</div>
+            <div class="link">查看详情</div>
+          </div>
+          <div class="row tasks">
+            <div>
+              <div class="task-title">梳理太平洋放开后的运行分析结论</div>
+              <div class="task-sub">关联问题：上线后稳定性观察 · 需要输出复盘记录</div>
+            </div>
+            <div>本地路由升级</div>
+            <div>太平洋</div>
+            <div>王五</div>
+            <div><span class="pill pill-red">阻塞</span></div>
+            <div>5月12日</div>
+            <div class="link">查看详情</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h2>我的待办</h2>
+              <p>只保留真正需要你今天和本周处理的事，不把所有任务都塞进来。</p>
+            </div>
+            <div class="link">打开个人视图</div>
+          </div>
+
+          <div class="filters">
+            <div class="filter">我负责</div>
+            <div class="filter">今天 / 本周</div>
+            <div class="filter">逾期优先</div>
+          </div>
+
+          <div class="table">
+            <div class="row todo header">
+              <div>待办事项</div>
+              <div>项目</div>
+              <div>券商</div>
+              <div>截止</div>
+              <div>状态</div>
+            </div>
+            <div class="row todo">
+              <div>
+                <div class="task-title">确认东吴测试资源</div>
+                <div class="task-sub">今天必须处理，否则测试安排无法落地</div>
+              </div>
+              <div>本地路由升级</div>
+              <div>东吴</div>
+              <div>今天 18:00</div>
+              <div><span class="pill pill-red">今日到期</span></div>
+            </div>
+            <div class="row todo">
+              <div>
+                <div class="task-title">跟进国金上线窗口</div>
+                <div class="task-sub">需要回收券商侧时间确认结果</div>
+              </div>
+              <div>Linux 主站推进</div>
+              <div>国金</div>
+              <div>周三</div>
+              <div><span class="pill pill-orange">本周到期</span></div>
+            </div>
+            <div class="row todo">
+              <div>
+                <div class="task-title">补充太平洋运行分析结论</div>
+                <div class="task-sub">已经逾期，需要今天给出初版复盘</div>
+              </div>
+              <div>本地路由升级</div>
+              <div>太平洋</div>
+              <div>已逾期 1 天</div>
+              <div><span class="pill pill-red">逾期</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h3>待办聚焦卡</h3>
+              <p>帮助执行者先排优先级，再进入任务详情处理。</p>
+            </div>
+          </div>
+
+          <div class="card-list">
+            <div class="card-item">
+              <div class="card-top">
+                <div class="card-title">今天必须完成</div>
+                <span class="pill pill-red">3 项</span>
+              </div>
+              <div class="card-meta">优先处理今日到期和已阻塞事项，避免影响测试安排和上线窗口。</div>
+            </div>
+            <div class="card-item">
+              <div class="card-top">
+                <div class="card-title">本周重点推进</div>
+                <span class="pill pill-orange">5 项</span>
+              </div>
+              <div class="card-meta">集中在本地路由升级和 Linux 主站推进的准备动作。</div>
+            </div>
+            <div class="card-item">
+              <div class="card-top">
+                <div class="card-title">等待他人反馈</div>
+                <span class="pill pill-blue">4 项</span>
+              </div>
+              <div class="card-meta">建议系统支持“催办”动作，后续可以再扩企业微信或邮件提醒。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

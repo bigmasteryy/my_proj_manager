@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新建新券商接入计划 Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #dce3ee;
+      --text: #1f2937;
+      --muted: #667085;
+      --primary: #2563eb;
+      --primary-soft: #e8f0ff;
+      --green: #12805c;
+      --green-soft: #e8f7ef;
+      --orange: #b45309;
+      --orange-soft: #fff3df;
+      --red: #b42318;
+      --red-soft: #fff1f0;
+      --shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 220px minmax(980px, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #101828;
+      color: #d0d5dd;
+      padding: 20px 14px;
+    }
+
+    .brand {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 4px 8px 18px;
+    }
+
+    .nav-title {
+      color: #8ea0b8;
+      font-size: 12px;
+      padding: 8px;
+      margin-top: 10px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: #e4e7ec;
+      margin-bottom: 4px;
+      text-decoration: none;
+    }
+
+    .nav-item.active {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.8;
+    }
+
+    .main {
+      padding: 22px 26px 36px;
+      overflow: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 26px;
+      line-height: 1.28;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    h3 {
+      font-size: 15px;
+    }
+
+    .muted {
+      color: var(--muted);
+      margin: 6px 0 0;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 7px;
+      min-height: 34px;
+      padding: 7px 12px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn.soft {
+      border-color: #c7d7fe;
+      background: var(--primary-soft);
+      color: #1849a9;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(620px, 1.1fr) minmax(360px, 0.9fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .form {
+      padding: 16px 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .fake-input,
+    .fake-textarea {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--text);
+      min-height: 36px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .fake-textarea {
+      min-height: 74px;
+      align-items: flex-start;
+      line-height: 1.6;
+    }
+
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+      width: fit-content;
+    }
+
+    .segment {
+      padding: 8px 12px;
+      color: var(--muted);
+      border-right: 1px solid var(--line);
+    }
+
+    .segment:last-child {
+      border-right: 0;
+    }
+
+    .segment.active {
+      background: var(--primary-soft);
+      color: #1849a9;
+      font-weight: 700;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcff;
+    }
+
+    .summary-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 12px;
+    }
+
+    .summary-item small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-item strong {
+      font-size: 17px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.orange {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .side-list {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+    }
+
+    .list-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .list-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .layout,
+      .form-grid,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">券商项目管理</div>
+      <div class="nav-title">日常工作</div>
+      <a class="nav-item active" href="./new-broker-onboarding-demo.html"><span class="nav-dot"></span>新券商接入</a>
+      <div class="nav-item"><span class="nav-dot"></span>推进矩阵</div>
+      <div class="nav-item"><span class="nav-dot"></span>券商台账</div>
+      <div class="nav-title">治理</div>
+      <div class="nav-item"><span class="nav-dot"></span>问题风险</div>
+      <div class="nav-item"><span class="nav-dot"></span>模板中心</div>
+      <a class="nav-item" href="./workday-calendar-demo.html"><span class="nav-dot"></span>工作日历</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">新建新券商</p>
+          <h1>生成接入计划</h1>
+          <p class="muted">在新建页面选择券商、模板、排期方式和全局工作日历，生成后进入该券商的接入详情。</p>
+        </div>
+        <div class="actions">
+          <a class="btn soft" href="./new-broker-onboarding-demo.html">返回总览</a>
+          <a class="btn">保存草稿</a>
+          <a class="btn primary" href="./new-broker-onboarding-demo.html">生成并进入详情</a>
+        </div>
+      </header>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>基础信息</h2>
+              <p class="muted">新券商接入项目创建时一次性生成阶段、阶段任务和基线计划。</p>
+            </div>
+          </div>
+          <div class="form">
+            <div class="form-grid">
+              <div class="field">
+                <label>券商</label>
+                <div class="fake-input">东莞证券</div>
+              </div>
+              <div class="field">
+                <label>项目名称</label>
+                <div class="fake-input">订单系统对接东莞证券</div>
+              </div>
+              <div class="field">
+                <label>项目负责人</label>
+                <div class="fake-input">戴洪添</div>
+              </div>
+              <div class="field">
+                <label>接入模板</label>
+                <div class="fake-input">新券商订单系统接入模板 V1</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>说明</label>
+              <div class="fake-textarea">用于新券商订单系统接入，包含方案沟通、环境部署、功能适配、验收、生产部署、灰度、小规模放开和正式上线。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>排期设置</h2>
+              <p class="muted">这块从主页面移到新建流程里。</p>
+            </div>
+          </div>
+          <div class="form">
+            <div class="field">
+              <label>生成方式</label>
+              <div class="segmented">
+                <div class="segment">按开始日期正排</div>
+                <div class="segment active">按目标上线倒排</div>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>计划开始日期</label>
+                <div class="fake-input">自动倒推出：2026-02-18</div>
+              </div>
+              <div class="field">
+                <label>目标上线日期</label>
+                <div class="fake-input">2026-08-28</div>
+              </div>
+              <div class="field">
+                <label>工作日历</label>
+                <div class="fake-input">中国大陆工作日历 2026</div>
+              </div>
+              <div class="field">
+                <label>延期重算策略</label>
+                <div class="fake-input">只影响当前券商，保留基线</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>日历规则</label>
+              <div class="fake-textarea">周六、周日、法定节假日不算工作日；调休上班日算工作日；手工修正由平台级工作日历统一维护。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top: 16px;">
+        <div class="panel-head">
+          <div>
+            <h2>生成结果预览</h2>
+            <p class="muted">确认后生成该券商自己的阶段实例、阶段任务和基线计划。</p>
+          </div>
+          <div class="actions">
+            <a class="btn soft" href="./workday-calendar-demo.html">查看工作日历</a>
+            <a class="btn primary">重新计算</a>
+          </div>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-item"><small>总周期</small><strong>2026-02-18 至 2026-08-28</strong></div>
+          <div class="summary-item"><small>合计工作日</small><strong>135d</strong></div>
+          <div class="summary-item"><small>默认生成</small><strong>17 阶段 / 82 任务</strong></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>阶段</th>
+              <th>计划开始</th>
+              <th>工作日</th>
+              <th>计划完成</th>
+              <th>默认任务</th>
+              <th>关键</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>产品方案沟通</td>
+              <td>2026-02-18</td>
+              <td>5d</td>
+              <td>2026-02-24</td>
+              <td>4</td>
+              <td><span class="tag green">普通阶段</span></td>
+            </tr>
+            <tr>
+              <td>券商信息技术、合规部门产品方案通过</td>
+              <td>2026-02-25</td>
+              <td>25d</td>
+              <td>2026-04-01</td>
+              <td>6</td>
+              <td><span class="tag orange">关键里程碑</span></td>
+            </tr>
+            <tr>
+              <td>测试环境部署</td>
+              <td>2026-04-10</td>
+              <td>10d</td>
+              <td>2026-04-23</td>
+              <td>8</td>
+              <td><span class="tag green">普通阶段</span></td>
+            </tr>
+            <tr>
+              <td>接口和订单系统功能适配</td>
+              <td>2026-05-12</td>
+              <td>15d</td>
+              <td>2026-06-02</td>
+              <td>14</td>
+              <td><span class="tag red">高风险阶段</span></td>
+            </tr>
+            <tr>
+              <td>系统安装部署</td>
+              <td>2026-06-11</td>
+              <td>5d</td>
+              <td>2026-06-17</td>
+              <td>7</td>
+              <td><span class="tag orange">关键里程碑</span></td>
+            </tr>
+            <tr>
+              <td>正式上线</td>
+              <td>2026-08-28</td>
+              <td>1d</td>
+              <td>2026-08-28</td>
+              <td>3</td>
+              <td><span class="tag orange">关键里程碑</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="layout" style="margin-top: 16px;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>默认任务模板</h2>
+              <p class="muted">复杂阶段会自动生成多个任务，进入详情后可继续增删改。</p>
+            </div>
+          </div>
+          <div class="side-list">
+            <div class="list-item">
+              <strong>接口和订单系统功能适配</strong>
+              <p>接口、客户端、H5、测试、后台、交易、订单回报、联调问题修复等 14 个默认任务。</p>
+            </div>
+            <div class="list-item">
+              <strong>系统安装部署</strong>
+              <p>生产机器确认、应用部署、数据库配置、接口程序部署、回滚方案确认等 7 个默认任务。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>创建后的去向</h2>
+              <p class="muted">新建页只负责生成计划，日常跟踪回到详情页。</p>
+            </div>
+          </div>
+          <div class="side-list">
+            <div class="list-item">
+              <strong>进入券商接入详情</strong>
+              <p>查看阶段计划、阶段工作台、任务、问题、风险和推进日志。</p>
+            </div>
+            <div class="list-item">
+              <strong>同步总览摘要</strong>
+              <p>总览页只展示当前阶段、总进度、下一节点、逾期任务和未关闭问题/风险。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<style>
+  :root {
+    --bg: #eef3f8;
+    --panel: rgba(255, 255, 255, 0.92);
+    --border: #dbe5f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --orange: #ea580c;
+    --orange-soft: #ffedd5;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+    --slate-soft: #f8fafc;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+      linear-gradient(180deg, #f8fbff, var(--bg));
+  }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    border-radius: 24px;
+    padding: 20px 18px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .brand { margin-bottom: 18px; }
+  .brand h2 { margin: 0 0 6px; font-size: 24px; color: var(--text); }
+  .brand p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+  .nav-group { display: grid; gap: 8px; margin-bottom: 16px; }
+  .nav-title {
+    padding: 8px 10px 2px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .nav-item {
+    padding: 11px 12px;
+    border-radius: 14px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+  }
+  .nav-item.active {
+    color: #0f172a;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .content-shell { display: grid; gap: 18px; }
+
+  .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  }
+
+  .hero-kicker {
+    margin-bottom: 10px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-copy h1 {
+    margin: 0 0 8px;
+    font-size: 34px;
+    color: var(--text);
+    line-height: 1.08;
+  }
+  .hero-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 760px;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .stat {
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  }
+  .stat-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .stat-value { color: var(--text); font-size: 30px; font-weight: 800; line-height: 1; }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
+    gap: 18px;
+  }
+
+  .panel, .aside-card {
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.75);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+  .panel { padding: 22px; }
+  .aside-stack { display: grid; gap: 16px; }
+  .aside-card { padding: 20px; }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-head h2, .section-head h3 {
+    margin: 0;
+    color: var(--text);
+  }
+  .section-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter {
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .highlights {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .highlight {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #fff, #f8fbff);
+  }
+  .highlight span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .highlight strong {
+    display: block;
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.45;
+  }
+  .highlight em {
+    display: block;
+    margin-top: 10px;
+    color: var(--blue);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .table {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .row {
+    display: grid;
+    align-items: center;
+  }
+  .row.issues {
+    grid-template-columns: 1.55fr 1fr 0.85fr 0.85fr 0.9fr 0.95fr 0.85fr;
+  }
+  .row.header {
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+  }
+  .row:not(.header) {
+    border-top: 1px solid #edf2f7;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .row > div { padding: 13px 14px; }
+
+  .title {
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .pill-blue { background: var(--blue-soft); color: #1d4ed8; }
+  .pill-green { background: var(--green-soft); color: #166534; }
+  .pill-orange { background: var(--orange-soft); color: #c2410c; }
+  .pill-red { background: var(--red-soft); color: #b91c1c; }
+
+  .list {
+    display: grid;
+    gap: 12px;
+  }
+  .list-item {
+    padding: 14px 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--slate-soft);
+  }
+  .list-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .list-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .list-meta {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .link {
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>项目管理平台</h2>
+      <p>这张页负责把问题集中、分级、跟踪、关闭，避免问题散落在备注和聊天记录里。</p>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">总览</div>
+      <div class="nav-item">项目总览</div>
+      <div class="nav-item">券商总览</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">推进</div>
+      <div class="nav-item">项目推进矩阵</div>
+      <div class="nav-item">排期中心</div>
+      <div class="nav-item active">问题中心</div>
+      <div class="nav-item">协作任务</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">基础资料</div>
+      <div class="nav-item">券商列表</div>
+      <div class="nav-item">服务器</div>
+      <div class="nav-item">委托主站</div>
+      <div class="nav-item">版本管理</div>
+    </div>
+  </aside>
+
+  <div class="content-shell">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="hero-kicker">问题中心 / 闭环跟踪</div>
+        <h1>把共享问题、个性问题和阻塞项集中收口，不再埋在备注里</h1>
+        <p>
+          这张页重点解决两个问题：第一，项目推进时的关键问题要能集中暴露；第二，问题要能跟项目、券商、责任人和最近跟进记录挂起来，
+          方便判断哪些只是待处理，哪些已经真正阻塞推进。
+        </p>
+      </div>
+      <div class="hero-actions">
+        <div class="chip">新增问题</div>
+        <div class="chip">批量指派</div>
+        <div class="chip">导出问题清单</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">问题总数</div><div class="stat-value">37</div></div>
+      <div class="stat"><div class="stat-label">高风险问题</div><div class="stat-value">8</div></div>
+      <div class="stat"><div class="stat-label">阻塞问题</div><div class="stat-value">5</div></div>
+      <div class="stat"><div class="stat-label">本周新增</div><div class="stat-value">9</div></div>
+      <div class="stat"><div class="stat-label">本周关闭</div><div class="stat-value">6</div></div>
+    </div>
+
+    <div class="workspace">
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h2>问题总览</h2>
+            <p>先看最值得盯的高风险和阻塞问题，再从下面的问题表统一推进。</p>
+          </div>
+          <div class="link">查看全部问题</div>
+        </div>
+
+        <div class="filters">
+          <div class="filter">项目：全部</div>
+          <div class="filter">券商：全部</div>
+          <div class="filter">级别：高风险优先</div>
+          <div class="filter">状态：未关闭</div>
+          <div class="filter">负责人：全部</div>
+        </div>
+
+        <div class="highlights">
+          <div class="highlight">
+            <span>阻塞问题</span>
+            <strong>东吴灰度放开第 8 步缺测试资源</strong>
+            <em>本地路由升级 / 东吴</em>
+          </div>
+          <div class="highlight">
+            <span>共享问题</span>
+            <strong>国金与信创验证共用测试资源冲突</strong>
+            <em>Linux 主站推进 / 信创推进</em>
+          </div>
+          <div class="highlight">
+            <span>待关闭问题</span>
+            <strong>太平洋放开后运行分析结论未归档</strong>
+            <em>本地路由升级 / 太平洋</em>
+          </div>
+        </div>
+
+        <div class="table">
+          <div class="row issues header">
+            <div>问题</div>
+            <div>项目 / 券商</div>
+            <div>级别</div>
+            <div>状态</div>
+            <div>负责人</div>
+            <div>最近跟进</div>
+            <div>操作</div>
+          </div>
+          <div class="row issues">
+            <div>
+              <div class="title">东吴灰度放开缺测试资源</div>
+              <div class="sub">影响客户端放开第 8 步，未解决前无法继续推进灰度安排</div>
+            </div>
+            <div>本地路由升级 / 东吴</div>
+            <div><span class="pill pill-red">高风险</span></div>
+            <div><span class="pill pill-red">阻塞</span></div>
+            <div>张三</div>
+            <div>今天 10:20</div>
+            <div class="link">查看详情</div>
+          </div>
+          <div class="row issues">
+            <div>
+              <div class="title">国金测试资源排期冲突</div>
+              <div class="sub">Linux 主站推进和信创推进同时占用测试资源，需要协调时间窗口</div>
+            </div>
+            <div>Linux 主站推进 / 国金</div>
+            <div><span class="pill pill-orange">中风险</span></div>
+            <div><span class="pill pill-orange">处理中</span></div>
+            <div>李四</div>
+            <div>昨天 17:40</div>
+            <div class="link">查看详情</div>
+          </div>
+          <div class="row issues">
+            <div>
+              <div class="title">太平洋放开后运行分析未归档</div>
+              <div class="sub">问题本身已缓解，但还缺复盘结论，不利于后续共享经验</div>
+            </div>
+            <div>本地路由升级 / 太平洋</div>
+            <div><span class="pill pill-blue">低风险</span></div>
+            <div><span class="pill pill-blue">待关闭</span></div>
+            <div>王五</div>
+            <div>昨天 09:15</div>
+            <div class="link">查看详情</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="aside-stack">
+        <div class="aside-card">
+          <div class="section-head">
+            <div>
+              <h3>阻塞问题</h3>
+              <p>这里专门只放会直接卡住推进的事项。</p>
+            </div>
+          </div>
+          <div class="list">
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">东吴：测试资源未确认</div>
+                <span class="pill pill-red">阻塞</span>
+              </div>
+              <div class="list-meta">本地路由升级 · 当前卡住客户端放开后续步骤。</div>
+            </div>
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">国金：排期冲突未协调</div>
+                <span class="pill pill-red">阻塞</span>
+              </div>
+              <div class="list-meta">Linux 主站推进 / 信创推进 · 共享测试资源冲突。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aside-card">
+          <div class="section-head">
+            <div>
+              <h3>最近更新</h3>
+              <p>帮助快速知道哪些问题最近有人跟、哪些已经沉默太久。</p>
+            </div>
+          </div>
+          <div class="list">
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">东吴问题今日更新</div>
+                <div class="link">10:20</div>
+              </div>
+              <div class="list-meta">已追加测试资源协调记录，仍待确认负责人回复。</div>
+            </div>
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">太平洋待关闭项昨日更新</div>
+                <div class="link">昨天</div>
+              </div>
+              <div class="list-meta">运行分析初稿已提交，等待项目经理确认是否关闭。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="aside-card">
+          <div class="section-head">
+            <div>
+              <h3>关闭结果</h3>
+              <p>问题不是点成完成就结束，最好还能留下结果摘要。</p>
+            </div>
+          </div>
+          <div class="list">
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">中天国富版本内容确认问题关闭</div>
+                <div class="link">5月11日</div>
+              </div>
+              <div class="list-meta">结论：版本内容已与券商确认，不再影响后续验收和上线。</div>
+            </div>
+            <div class="list-item">
+              <div class="list-top">
+                <div class="list-title">太平洋 APP 升级兼容问题关闭</div>
+                <div class="link">5月10日</div>
+              </div>
+              <div class="list-meta">结论：升级后验证通过，问题转入经验归档。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
