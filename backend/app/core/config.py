@@ -7,8 +7,20 @@ from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-LOCAL_DATA_DIR = Path(os.getenv("LOCALAPPDATA", Path.cwd())) / "BrokerProjectManager"
-DEFAULT_SQLITE_PATH = LOCAL_DATA_DIR / "broker_pm_local.db"
+def resolve_data_dir() -> Path:
+    configured_dir = os.getenv("BROKER_PM_DATA_DIR")
+    if configured_dir:
+        return Path(configured_dir)
+
+    current_file = Path(__file__).resolve()
+    for parent in current_file.parents:
+        if (parent / "docker-compose.yml").exists():
+            return parent / "data"
+
+    return current_file.parents[2] / "data"
+
+
+DEFAULT_SQLITE_PATH = resolve_data_dir() / "broker_pm_local.db"
 
 
 class Settings(BaseSettings):
